@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,9 +11,10 @@ import { useToast } from "@/hooks/use-toast";
 
 interface CreateTicketFormProps {
   onTicketCreated: () => void;
+  editingTicket?: any;
 }
 
-const CreateTicketForm = ({ onTicketCreated }: CreateTicketFormProps) => {
+const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormProps) => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -30,6 +30,22 @@ const CreateTicketForm = ({ onTicketCreated }: CreateTicketFormProps) => {
   const [generatedJiraText, setGeneratedJiraText] = useState("");
   const [generatedQuery, setGeneratedQuery] = useState("");
   const { toast } = useToast();
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingTicket) {
+      setFormData({
+        title: editingTicket.title || "",
+        description: editingTicket.description || "",
+        type: editingTicket.type || "",
+        priority: editingTicket.priority || "",
+        environment: editingTicket.environment || "",
+        steps: editingTicket.steps || "",
+        expectedResult: editingTicket.expectedResult || "",
+        actualResult: editingTicket.actualResult || ""
+      });
+    }
+  }, [editingTicket]);
 
   const ticketTypes = [
     { value: "bug", label: "Bug/Erro", query: "SELECT * FROM logs WHERE error_type = 'APPLICATION' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
@@ -110,10 +126,10 @@ h2. Informações Adicionais
     generateJiraText();
     
     // Simular salvamento no banco de dados
-    console.log("Salvando chamado:", { ...formData, images: uploadedImages });
+    console.log(editingTicket ? "Atualizando chamado:" : "Salvando chamado:", { ...formData, images: uploadedImages });
     
     toast({
-      title: "Chamado criado com sucesso!",
+      title: editingTicket ? "Chamado atualizado com sucesso!" : "Chamado criado com sucesso!",
       description: "Texto JIRA e query SQL foram gerados",
     });
   };
@@ -122,7 +138,9 @@ h2. Informações Adicionais
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl text-gray-800">Criar Novo Chamado</CardTitle>
+          <CardTitle className="text-2xl text-gray-800">
+            {editingTicket ? "Editar Chamado" : "Criar Novo Chamado"}
+          </CardTitle>
           <CardDescription>Preencha as informações para gerar automaticamente o texto JIRA e queries SQL</CardDescription>
         </CardHeader>
         <CardContent>
@@ -279,7 +297,7 @@ h2. Informações Adicionais
             </div>
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-              Gerar Chamado JIRA
+              {editingTicket ? "Atualizar Chamado JIRA" : "Gerar Chamado JIRA"}
             </Button>
           </form>
         </CardContent>
