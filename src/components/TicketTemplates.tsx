@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,7 @@ import { Plus, FileText, Database, Edit, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const TicketTemplates = () => {
-  const [templates, setTemplates] = useState([
+  const defaultTemplates = [
     {
       id: 1,
       name: "Bug de Sistema",
@@ -39,7 +38,12 @@ const TicketTemplates = () => {
       sqlQuery: "SELECT service_name, status, error_message FROM integration_logs WHERE status = 'FAILED';",
       category: "Integração"
     }
-  ]);
+  ];
+
+  const [templates, setTemplates] = useState(() => {
+    const savedTemplates = localStorage.getItem('ticketTemplates');
+    return savedTemplates ? JSON.parse(savedTemplates) : defaultTemplates;
+  });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
@@ -53,6 +57,11 @@ const TicketTemplates = () => {
   });
 
   const { toast } = useToast();
+
+  // Save templates to localStorage whenever templates change
+  useEffect(() => {
+    localStorage.setItem('ticketTemplates', JSON.stringify(templates));
+  }, [templates]);
 
   const categories = ["Sistema", "Performance", "Integração", "Segurança", "Dados", "Relatórios"];
   const types = ["bug", "performance", "integration", "access", "data", "security"];
@@ -101,7 +110,7 @@ const TicketTemplates = () => {
       });
     } else {
       const newTemplate = {
-        id: templates.length + 1,
+        id: Math.max(...templates.map(t => t.id), 0) + 1,
         ...formData
       };
       setTemplates(prev => [...prev, newTemplate]);
