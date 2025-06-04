@@ -1,12 +1,213 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Plus, FileText, Database, Image as ImageIcon, Search } from "lucide-react";
+import CreateTicketForm from "@/components/CreateTicketForm";
+import TicketTemplates from "@/components/TicketTemplates";
+import TicketHistory from "@/components/TicketHistory";
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [tickets] = useState([
+    {
+      id: 1,
+      title: "Sistema de login não funcionando",
+      type: "Bug",
+      status: "Aberto",
+      created: "2024-06-04",
+      priority: "Alta"
+    },
+    {
+      id: 2,
+      title: "Lentidão no sistema de vendas",
+      type: "Performance",
+      status: "Em andamento",
+      created: "2024-06-03",
+      priority: "Média"
+    }
+  ]);
+
+  const stats = {
+    totalTickets: tickets.length,
+    openTickets: tickets.filter(t => t.status === "Aberto").length,
+    inProgress: tickets.filter(t => t.status === "Em andamento").length,
+    templates: 12
+  };
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case "create":
+        return <CreateTicketForm onTicketCreated={() => setActiveTab("dashboard")} />;
+      case "templates":
+        return <TicketTemplates />;
+      case "history":
+        return <TicketHistory tickets={tickets} />;
+      default:
+        return (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-blue-700">Total de Chamados</CardTitle>
+                  <FileText className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-800">{stats.totalTickets}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-orange-700">Chamados Abertos</CardTitle>
+                  <Search className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-800">{stats.openTickets}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-green-700">Em Andamento</CardTitle>
+                  <Database className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-800">{stats.inProgress}</div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-purple-700">Templates</CardTitle>
+                  <ImageIcon className="h-4 w-4 text-purple-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-purple-800">{stats.templates}</div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-800">Ações Rápidas</CardTitle>
+                <CardDescription>Gerencie seus chamados e templates de forma eficiente</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button 
+                    onClick={() => setActiveTab("create")}
+                    className="h-24 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center space-y-2"
+                  >
+                    <Plus className="h-6 w-6" />
+                    <span>Novo Chamado</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setActiveTab("templates")}
+                    variant="outline"
+                    className="h-24 border-2 border-blue-200 hover:bg-blue-50 flex flex-col items-center justify-center space-y-2"
+                  >
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    <span>Gerenciar Templates</span>
+                  </Button>
+                  
+                  <Button 
+                    onClick={() => setActiveTab("history")}
+                    variant="outline"
+                    className="h-24 border-2 border-gray-200 hover:bg-gray-50 flex flex-col items-center justify-center space-y-2"
+                  >
+                    <Search className="h-6 w-6 text-gray-600" />
+                    <span>Histórico</span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Recent Tickets */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-800">Chamados Recentes</CardTitle>
+                <CardDescription>Visualize os últimos chamados criados</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {tickets.map((ticket) => (
+                    <div key={ticket.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-gray-900">{ticket.title}</h3>
+                        <p className="text-sm text-gray-500">Criado em {ticket.created}</p>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant={ticket.priority === "Alta" ? "destructive" : ticket.priority === "Média" ? "default" : "secondary"}>
+                          {ticket.priority}
+                        </Badge>
+                        <Badge variant="outline">{ticket.type}</Badge>
+                        <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
+                          {ticket.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">TI Support</h1>
+              <p className="text-gray-600">Sistema de Geração de Chamados JIRA</p>
+            </div>
+            <div className="flex space-x-4">
+              <Button
+                onClick={() => setActiveTab("dashboard")}
+                variant={activeTab === "dashboard" ? "default" : "outline"}
+                className={activeTab === "dashboard" ? "bg-blue-600 text-white" : ""}
+              >
+                Dashboard
+              </Button>
+              <Button
+                onClick={() => setActiveTab("create")}
+                variant={activeTab === "create" ? "default" : "outline"}
+                className={activeTab === "create" ? "bg-blue-600 text-white" : ""}
+              >
+                Criar Chamado
+              </Button>
+              <Button
+                onClick={() => setActiveTab("templates")}
+                variant={activeTab === "templates" ? "default" : "outline"}
+                className={activeTab === "templates" ? "bg-blue-600 text-white" : ""}
+              >
+                Templates
+              </Button>
+              <Button
+                onClick={() => setActiveTab("history")}
+                variant={activeTab === "history" ? "default" : "outline"}
+                className={activeTab === "history" ? "bg-blue-600 text-white" : ""}
+              >
+                Histórico
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {renderContent()}
+      </main>
     </div>
   );
 };
