@@ -3,14 +3,15 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, FileText, Database, Image as ImageIcon, Search } from "lucide-react";
+import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
+import { Plus, FileText, Database, Image as ImageIcon, Search, Edit, Trash2 } from "lucide-react";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketTemplates from "@/components/TicketTemplates";
 import TicketHistory from "@/components/TicketHistory";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [tickets] = useState([
+  const [tickets, setTickets] = useState([
     {
       id: 1,
       title: "Sistema de login não funcionando",
@@ -28,6 +29,7 @@ const Index = () => {
       priority: "Média"
     }
   ]);
+  const [editingTicket, setEditingTicket] = useState(null);
 
   const stats = {
     totalTickets: tickets.length,
@@ -36,10 +38,26 @@ const Index = () => {
     templates: 12
   };
 
+  const handleEditTicket = (ticket) => {
+    setEditingTicket(ticket);
+    setActiveTab("create");
+  };
+
+  const handleDeleteTicket = (ticketId) => {
+    if (confirm("Tem certeza que deseja excluir este chamado?")) {
+      setTickets(tickets.filter(t => t.id !== ticketId));
+    }
+  };
+
+  const handleTicketCreated = () => {
+    setEditingTicket(null);
+    setActiveTab("dashboard");
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case "create":
-        return <CreateTicketForm onTicketCreated={() => setActiveTab("dashboard")} />;
+        return <CreateTicketForm onTicketCreated={handleTicketCreated} editingTicket={editingTicket} />;
       case "templates":
         return <TicketTemplates />;
       case "history":
@@ -99,7 +117,10 @@ const Index = () => {
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Button 
-                    onClick={() => setActiveTab("create")}
+                    onClick={() => {
+                      setEditingTicket(null);
+                      setActiveTab("create");
+                    }}
                     className="h-24 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center space-y-2"
                   >
                     <Plus className="h-6 w-6" />
@@ -131,26 +152,43 @@ const Index = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800">Chamados Recentes</CardTitle>
-                <CardDescription>Visualize os últimos chamados criados</CardDescription>
+                <CardDescription>Visualize os últimos chamados criados - Clique com o botão direito para editar ou excluir</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {tickets.map((ticket) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-gray-900">{ticket.title}</h3>
-                        <p className="text-sm text-gray-500">Criado em {ticket.created}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Badge variant={ticket.priority === "Alta" ? "destructive" : ticket.priority === "Média" ? "default" : "secondary"}>
-                          {ticket.priority}
-                        </Badge>
-                        <Badge variant="outline">{ticket.type}</Badge>
-                        <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
-                          {ticket.status}
-                        </Badge>
-                      </div>
-                    </div>
+                    <ContextMenu key={ticket.id}>
+                      <ContextMenuTrigger>
+                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900">{ticket.title}</h3>
+                            <p className="text-sm text-gray-500">Criado em {ticket.created}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Badge variant={ticket.priority === "Alta" ? "destructive" : ticket.priority === "Média" ? "default" : "secondary"}>
+                              {ticket.priority}
+                            </Badge>
+                            <Badge variant="outline">{ticket.type}</Badge>
+                            <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
+                              {ticket.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </ContextMenuTrigger>
+                      <ContextMenuContent>
+                        <ContextMenuItem onClick={() => handleEditTicket(ticket)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar Chamado
+                        </ContextMenuItem>
+                        <ContextMenuItem 
+                          onClick={() => handleDeleteTicket(ticket.id)}
+                          className="text-red-600 focus:text-red-600"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir Chamado
+                        </ContextMenuItem>
+                      </ContextMenuContent>
+                    </ContextMenu>
                   ))}
                 </div>
               </CardContent>
