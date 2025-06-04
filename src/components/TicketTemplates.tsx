@@ -37,6 +37,114 @@ const TicketTemplates = () => {
       jiraTemplate: "h2. Falha na Integração\n{description}\n\nServiços afetados:\n{services}",
       sqlQuery: "SELECT service_name, status, error_message FROM integration_logs WHERE status = 'FAILED';",
       category: "Integração"
+    },
+    {
+      id: 4,
+      name: "Erro de Acesso/Execução",
+      type: "access",
+      description: "Template para problemas de acesso e execução de funcionalidades",
+      jiraTemplate: "h2. Erro de Acesso\n{description}\n\nFuncionalidade afetada:\n{functionality}\n\nUsuário/Perfil:\n{user_profile}",
+      sqlQuery: "SELECT user_id, role, permissions FROM user_access WHERE status = 'DENIED';",
+      category: "Acesso"
+    },
+    {
+      id: 5,
+      name: "Erro na Assinatura de Documento",
+      type: "document",
+      description: "Template para problemas com assinatura digital de documentos",
+      jiraTemplate: "h2. Erro na Assinatura\n{description}\n\nTipo de documento:\n{document_type}\n\nMensagem de erro:\n{error_message}",
+      sqlQuery: "SELECT document_id, signature_status, error_log FROM digital_signatures WHERE status = 'FAILED';",
+      category: "Documentos"
+    },
+    {
+      id: 6,
+      name: "Sessão de Julgamento - Erro",
+      type: "session",
+      description: "Template para erros durante sessões de julgamento",
+      jiraTemplate: "h2. Erro na Sessão\n{description}\n\nTipo de sessão:\n{session_type}\n\nEtapa afetada:\n{affected_step}",
+      sqlQuery: "SELECT session_id, session_type, error_details FROM court_sessions WHERE status = 'ERROR';",
+      category: "Sessões"
+    },
+    {
+      id: 7,
+      name: "Erro de Movimentação",
+      type: "movement",
+      description: "Template para problemas de movimentação processual",
+      jiraTemplate: "h2. Erro de Movimentação\n{description}\n\nTipo de movimentação:\n{movement_type}\n\nProcesso:\n{process_number}",
+      sqlQuery: "SELECT process_id, movement_type, error_reason FROM process_movements WHERE status = 'FAILED';",
+      category: "Movimentação"
+    },
+    {
+      id: 8,
+      name: "Tarefa - Erro de Fluxo",
+      type: "workflow",
+      description: "Template para erros em fluxos de tarefas",
+      jiraTemplate: "h2. Erro no Fluxo\n{description}\n\nTarefa afetada:\n{task_name}\n\nEtapa do fluxo:\n{workflow_step}",
+      sqlQuery: "SELECT task_id, workflow_step, error_details FROM task_workflows WHERE status = 'BLOCKED';",
+      category: "Fluxo"
+    },
+    {
+      id: 9,
+      name: "Cadastro - Erro na Elaboração",
+      type: "registration",
+      description: "Template para erros em cadastros e elaboração de dados",
+      jiraTemplate: "h2. Erro no Cadastro\n{description}\n\nTipo de cadastro:\n{registration_type}\n\nCampos afetados:\n{affected_fields}",
+      sqlQuery: "SELECT registration_id, type, validation_errors FROM registrations WHERE status = 'INVALID';",
+      category: "Cadastro"
+    },
+    {
+      id: 10,
+      name: "Usuário - Erro de Acesso ao Sistema",
+      type: "user_access",
+      description: "Template para problemas de acesso de usuários ao sistema",
+      jiraTemplate: "h2. Erro de Acesso de Usuário\n{description}\n\nUsuário:\n{username}\n\nTipo de erro:\n{access_error_type}",
+      sqlQuery: "SELECT user_id, username, last_login_attempt, error_message FROM user_login_logs WHERE success = FALSE;",
+      category: "Usuários"
+    },
+    {
+      id: 11,
+      name: "Pauta de Julgamento - Erro",
+      type: "schedule",
+      description: "Template para problemas com pautas de julgamento",
+      jiraTemplate: "h2. Erro na Pauta\n{description}\n\nData da pauta:\n{schedule_date}\n\nProcessos afetados:\n{affected_processes}",
+      sqlQuery: "SELECT schedule_id, schedule_date, process_count, error_details FROM court_schedules WHERE status = 'ERROR';",
+      category: "Pautas"
+    },
+    {
+      id: 12,
+      name: "Redistribuição - Erro",
+      type: "redistribution",
+      description: "Template para problemas de redistribuição de processos",
+      jiraTemplate: "h2. Erro na Redistribuição\n{description}\n\nProcesso:\n{process_number}\n\nDestino:\n{target_court}",
+      sqlQuery: "SELECT redistribution_id, process_id, source_court, target_court, error_reason FROM redistributions WHERE status = 'FAILED';",
+      category: "Redistribuição"
+    },
+    {
+      id: 13,
+      name: "Peticionamento Avulso - Erro",
+      type: "petition",
+      description: "Template para erros em peticionamento avulso",
+      jiraTemplate: "h2. Erro no Peticionamento\n{description}\n\nTipo de petição:\n{petition_type}\n\nDocumentos anexos:\n{attached_documents}",
+      sqlQuery: "SELECT petition_id, petition_type, submission_date, error_details FROM petitions WHERE status = 'REJECTED';",
+      category: "Peticionamento"
+    },
+    {
+      id: 14,
+      name: "Sistema - Correção/Inclusão de Dados",
+      type: "data_correction",
+      description: "Template para correção e inclusão de dados no sistema",
+      jiraTemplate: "h2. Correção de Dados\n{description}\n\nTabela/Entidade:\n{entity_name}\n\nTipo de correção:\n{correction_type}",
+      sqlQuery: "SELECT entity_id, table_name, old_value, new_value, correction_date FROM data_corrections;",
+      category: "Dados"
+    },
+    {
+      id: 15,
+      name: "Audiência - Erro de Assinatura",
+      type: "hearing",
+      description: "Template para problemas em audiências e assinaturas",
+      jiraTemplate: "h2. Erro na Audiência\n{description}\n\nTipo de audiência:\n{hearing_type}\n\nParticipantes:\n{participants}",
+      sqlQuery: "SELECT hearing_id, hearing_type, scheduled_date, error_log FROM hearings WHERE status = 'FAILED';",
+      category: "Audiências"
     }
   ];
 
@@ -63,8 +171,8 @@ const TicketTemplates = () => {
     localStorage.setItem('ticketTemplates', JSON.stringify(templates));
   }, [templates]);
 
-  const categories = ["Sistema", "Performance", "Integração", "Segurança", "Dados", "Relatórios"];
-  const types = ["bug", "performance", "integration", "access", "data", "security"];
+  const categories = ["Sistema", "Performance", "Integração", "Acesso", "Documentos", "Sessões", "Movimentação", "Fluxo", "Cadastro", "Usuários", "Pautas", "Redistribuição", "Peticionamento", "Dados", "Audiências"];
+  const types = ["bug", "performance", "integration", "access", "document", "session", "movement", "workflow", "registration", "user_access", "schedule", "redistribution", "petition", "data_correction", "hearing"];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -137,8 +245,17 @@ const TicketTemplates = () => {
       performance: "bg-yellow-100 text-yellow-800",
       integration: "bg-blue-100 text-blue-800",
       access: "bg-green-100 text-green-800",
-      data: "bg-purple-100 text-purple-800",
-      security: "bg-orange-100 text-orange-800"
+      document: "bg-purple-100 text-purple-800",
+      session: "bg-orange-100 text-orange-800",
+      movement: "bg-cyan-100 text-cyan-800",
+      workflow: "bg-pink-100 text-pink-800",
+      registration: "bg-indigo-100 text-indigo-800",
+      user_access: "bg-emerald-100 text-emerald-800",
+      schedule: "bg-amber-100 text-amber-800",
+      redistribution: "bg-violet-100 text-violet-800",
+      petition: "bg-rose-100 text-rose-800",
+      data_correction: "bg-teal-100 text-teal-800",
+      hearing: "bg-lime-100 text-lime-800"
     };
     return colors[type] || "bg-gray-100 text-gray-800";
   };
