@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const TicketTemplates = () => {
   const defaultTemplates = [
+    // Templates originais
     {
       id: 1,
       name: "Bug de Sistema",
@@ -145,6 +147,389 @@ const TicketTemplates = () => {
       jiraTemplate: "h2. Erro na Audiência\n{description}\n\nTipo de audiência:\n{hearing_type}\n\nParticipantes:\n{participants}",
       sqlQuery: "SELECT hearing_id, hearing_type, scheduled_date, error_log FROM hearings WHERE status = 'FAILED';",
       category: "Audiências"
+    },
+    // Novos templates baseados nas queries fornecidas
+    {
+      id: 16,
+      name: "Partes do Processo",
+      type: "process_parts",
+      description: "Template para consultar partes envolvidas em um processo",
+      jiraTemplate: "h2. Consulta de Partes do Processo\n{description}\n\nNúmero do processo:\n{process_number}\n\nPartes encontradas:\n{parts_found}",
+      sqlQuery: `SELECT  
+  pp.id_processo_parte,  
+  pp.id_pessoa,  
+  pp.id_tipo_parte,  
+  pp.in_participacao,  
+  pp.in_parte_principal,  
+  pp.in_situacao,  
+  ul.ds_nome,  
+  ul.ds_login  
+FROM  
+  tb_processo_parte AS pp  
+INNER JOIN  
+  tb_usuario_login AS ul  
+  ON pp.id_pessoa = ul.id_usuario  
+WHERE  
+  pp.id_processo_trf = ( 
+    SELECT id_processo  
+    FROM tb_processo  
+    WHERE nr_processo ILIKE '0010562-10.2017.5.15.0041'
+  )  
+ORDER BY  
+  pp.in_participacao,  
+  pp.in_situacao;`,
+      category: "Processo"
+    },
+    {
+      id: 17,
+      name: "Tarefa Atual do Processo",
+      type: "current_task",
+      description: "Template para identificar a tarefa atual de um processo",
+      jiraTemplate: "h2. Tarefa Atual do Processo\n{description}\n\nNúmero do processo:\n{process_number}\n\nTarefa identificada:\n{current_task}",
+      sqlQuery: `SELECT 
+  ti.name_ AS nome_tarefa, 
+  ti.actorid_ AS login_usuario, 
+  oj.ds_orgao_julgador, 
+  ojc.ds_orgao_julgador_colegiado, 
+  MAX(pr.nr_processo) AS nr_processo, 
+  COUNT(*) 
+FROM 
+  jbpm_variableinstance vi 
+  JOIN jbpm_taskinstance ti ON ti.procinst_ = vi.processinstance_ 
+  JOIN tb_processo_instance procxins ON procxins.id_proc_inst = ti.procinst_ 
+  JOIN tb_processo pr ON pr.id_processo = procxins.id_processo 
+  JOIN tb_processo_trf ptrf ON ptrf.id_processo_trf = pr.id_processo 
+  JOIN tb_orgao_julgador oj ON oj.id_orgao_julgador = ptrf.id_orgao_julgador 
+  LEFT JOIN tb_orgao_julgador_colgiado ojc ON 
+    ojc.id_orgao_julgador_colegiado = ptrf.id_orgao_julgador_colegiado 
+WHERE 
+  ti.end_ IS NULL 
+  AND ti.isopen_ = 'true' 
+  AND vi.name_ = 'processo' 
+  AND pr.nr_processo ILIKE '0127500-72.2003.5.15.0011' 
+GROUP BY 
+  ti.name_, 
+  ti.actorid_, 
+  oj.ds_orgao_julgador, 
+  ojc.ds_orgao_julgador_colegiado 
+ORDER BY 
+  COUNT(*);`,
+      category: "Processo"
+    },
+    {
+      id: 18,
+      name: "Processo na Fase Errada",
+      type: "wrong_phase",
+      description: "Template para identificar processos em fase incorreta",
+      jiraTemplate: "h2. Processo na Fase Errada\n{description}\n\nNúmero do processo:\n{process_number}\n\nFase atual:\n{current_phase}\n\nFase esperada:\n{expected_phase}",
+      sqlQuery: `SELECT  
+  p.nr_processo,  
+  f.id_agrupamento_fase,  
+  f.nm_agrupamento_fase  
+FROM  
+  tb_processo p,  
+  tb_agrupamento_fase f  
+WHERE  
+  p.id_agrupamento_fase = f.id_agrupamento_fase  
+  AND nr_processo ILIKE '0010450-69.2019.5.15.0106';`,
+      category: "Processo"
+    },
+    {
+      id: 19,
+      name: "Documento sem Data de Juntada",
+      type: "document_no_date",
+      description: "Template para documentos sem data de juntada",
+      jiraTemplate: "h2. Documento sem Data de Juntada\n{description}\n\nNúmero do processo:\n{process_number}\n\nDocumento:\n{document_id}\n\nAção necessária:\n{required_action}",
+      sqlQuery: `SELECT  
+  pdb.id_processo_documento_bin,  
+  pd.dt_juntada,  
+  pr.id_processo,  
+  pd.id_processo_documento  
+FROM  
+  tb_processo pr,  
+  tb_processo_documento pd,  
+  tb_processo_documento_bin pdb,  
+  tb_tipo_processo_documento tpd,  
+  tb_proc_doc_bin_pess_assin pa  
+WHERE  
+  pr.id_processo = pd.id_processo  
+  AND pd.id_processo_documento_bin = pdb.id_processo_documento_bin  
+  AND tpd.id_tipo_processo_documento = pd.id_tipo_processo_documento  
+  AND pa.id_processo_documento_bin = pdb.id_processo_documento_bin  
+  AND pr.nr_processo ILIKE '1190700-54.2005.5.15.0144'  
+  AND pd.dt_juntada IS NULL;`,
+      category: "Documentos"
+    },
+    {
+      id: 20,
+      name: "Análise de Dependência - Erro Inesperado",
+      type: "dependency_analysis",
+      description: "Template para análise de dependências em processos com erro inesperado",
+      jiraTemplate: "h2. Análise de Dependência\n{description}\n\nNúmero do processo:\n{process_number}\n\nTipo de dependência:\n{dependency_type}\n\nErro identificado:\n{error_details}",
+      sqlQuery: `SELECT  
+  proc.id_processo,  
+  proc.nr_processo  
+FROM  
+  tb_processo proc,  
+  tb_processo_trf proctrf  
+WHERE  
+  proc.id_processo = proctrf.id_processo_trf  
+  AND proc.nr_processo ILIKE '%0011456-41.2017.5.15.0055%';`,
+      category: "Processo"
+    },
+    {
+      id: 21,
+      name: "Partes do Processo sem ID_PAIS",
+      type: "parts_no_country",
+      description: "Template para partes de processo sem ID do país",
+      jiraTemplate: "h2. Partes sem ID do País\n{description}\n\nNúmero do processo:\n{process_number}\n\nPartes afetadas:\n{affected_parts}\n\nCorreção aplicada:\n{correction_applied}",
+      sqlQuery: `SELECT  
+  p.id_endereco,  
+  id_pais  
+FROM  
+  pje.tb_endereco p  
+WHERE  
+  id_endereco IN (  
+    SELECT id_endereco  
+    FROM pje.tb_processo_parte_endereco e  
+    WHERE id_processo_parte IN (  
+      SELECT id_processo_parte  
+      FROM pje.tb_processo_parte_endereco  
+      WHERE id_processo_parte IN (  
+        SELECT id_processo_parte  
+        FROM tb_processo_parte t  
+        WHERE t.id_processo_trf = (  
+          SELECT id_processo  
+          FROM tb_processo  
+          WHERE nr_processo ILIKE '0010562-10.2017.5.15.0041'  
+        )  
+      )  
+    )  
+  );`,
+      category: "Cadastro"
+    },
+    {
+      id: 22,
+      name: "Colocando Processo no Fluxo",
+      type: "process_workflow",
+      description: "Template para colocar processo no fluxo correto",
+      jiraTemplate: "h2. Processo no Fluxo\n{description}\n\nNúmero do processo:\n{process_number}\n\nFluxo atual:\n{current_workflow}\n\nAção realizada:\n{action_taken}",
+      sqlQuery: `SELECT  
+  tb_processo.nr_processo AS "Número do Processo",  
+  jbpm_processdefinition.name_ AS "Fluxo",  
+  jbpm_task.name_ AS "Tarefa",  
+  taskinstance.actorid_,  
+  taskinstance.id_ AS "Task Instance",  
+  taskinstance.task_ AS "Id Task",  
+  jbpm_task.tasknode_ AS "Task Node_",  
+  token.id_ AS "Token_Id",  
+  token.node_ AS "Token_node",  
+  processinstance.id_ AS "Process Instance",  
+  taskinstance.isopen_ AS "IsOpen",  
+  taskinstance.issignalling_,  
+  taskinstance.create_ AS "Data de Criação",  
+  taskinstance.start_ AS "Data Abertura Start",  
+  taskinstance.end_ AS "Data Saída End"  
+FROM  
+  jbpm_token token,  
+  jbpm_processinstance processinstance,  
+  jbpm_taskinstance taskinstance,  
+  jbpm_task,  
+  jbpm_processdefinition,  
+  tb_processo,  
+  tb_processo_instance  
+WHERE  
+  token.processinstance_ = processinstance.id_  
+  AND processinstance.processdefinition_ = jbpm_processdefinition.id_  
+  AND taskinstance.token_ = token.id_  
+  AND jbpm_task.id_ = taskinstance.task_  
+  AND tb_processo_instance.id_processo = tb_processo.id_processo  
+  AND tb_processo_instance.id_proc_inst = processinstance.id_  
+  AND tb_processo.nr_processo ILIKE '000110811.2012.5.15.0096'  
+ORDER BY  
+  taskinstance.id_ ASC;`,
+      category: "Fluxo"
+    },
+    {
+      id: 23,
+      name: "Count + Fórum por Tipo de Documento (RO)",
+      type: "document_count_forum",
+      description: "Template para contagem de documentos por fórum",
+      jiraTemplate: "h2. Contagem de Documentos por Fórum\n{description}\n\nTipo de documento:\n{document_type}\n\nFórum:\n{forum}\n\nQuantidade encontrada:\n{count_found}",
+      sqlQuery: `SELECT  
+  COUNT(1),  
+  j.ds_orgao_julgador  
+FROM  
+  tb_processo p,  
+  tb_processo_trf t,  
+  tb_orgao_julgador j  
+WHERE  
+  t.id_processo_trf = p.id_processo  
+  AND j.id_orgao_julgador = t.id_orgao_julgador  
+  AND j.id_orgao_julgador = 58  
+  AND EXISTS (  
+    SELECT 1  
+    FROM tb_processo_documento d  
+    WHERE  
+      d.id_processo = p.id_processo  
+      AND d.id_tipo_processo_documento = 47  -- "RO"  
+  )  
+  AND NOT EXISTS (  
+    SELECT 1  
+    FROM tb_processo_evento e  
+    WHERE  
+      e.id_processo = p.id_processo  
+      AND e.id_evento = 848  -- "trânsito em julgado"  
+  )  
+GROUP BY  
+  j.ds_orgao_julgador;`,
+      category: "Relatório"
+    },
+    {
+      id: 24,
+      name: "Inativar Documento de Decisão",
+      type: "deactivate_document",
+      description: "Template para inativar documentos de decisão",
+      jiraTemplate: "h2. Inativação de Documento\n{description}\n\nDocumento ID:\n{document_id}\n\nMotivo:\n{reason}\n\nStatus:\n{status}",
+      sqlQuery: `UPDATE tb_processo_documento  
+SET  
+  id_usuario_exclusao = 0,  
+  dt_exclusao = NOW(),  
+  ds_motivo_exclusao = 'Demanda PJEJT-47879 Jira/CSJT.',  
+  in_ativo = 'N',  
+  ds_nome_usuario_exclusao = 'Usuário do Sistema'  
+WHERE  
+  id_processo_documento = 52597365  
+  AND in_ativo = 'S';`,
+      category: "Documentos"
+    },
+    {
+      id: 25,
+      name: "Levantamento de Advogados e Peritos",
+      type: "lawyers_experts",
+      description: "Template para levantamento de advogados e peritos em processo",
+      jiraTemplate: "h2. Levantamento de Advogados e Peritos\n{description}\n\nNúmero do processo:\n{process_number}\n\nAdvogados encontrados:\n{lawyers_found}\n\nPeritos encontrados:\n{experts_found}",
+      sqlQuery: `SELECT  
+  p.nr_processo,  
+  u.id_usuario,  
+  u.ds_login,  
+  u.ds_nome,  
+  a.nr_oab  
+FROM  
+  tb_processo_parte pp  
+  INNER JOIN tb_processo p ON pp.id_processo_trf = p.id_processo  
+  INNER JOIN tb_proc_parte_represntante ppr ON pp.id_processo_parte = ppr.id_parte_representante  
+  INNER JOIN tb_pessoa_advogado a ON ppr.id_representante = a.id  
+  INNER JOIN tb_usuario_login u ON a.id = u.id_usuario  
+  INNER JOIN tb_pessoa_fisica pf ON pf.id_pessoa_fisica = u.id_usuario  
+WHERE  
+  a.in_validado = 'S'  
+  AND (pf.in_especializacoes & 1 <> 0)  
+  AND u.in_ativo = 'S'  
+  AND p.nr_processo <> ''  
+  AND p.nr_processo IS NOT NULL  
+  AND u.id_usuario IN (490851)  
+ORDER BY  
+  p.nr_processo ASC;`,
+      category: "Relatório"
+    },
+    {
+      id: 26,
+      name: "Inativar Documento Não Assinado",
+      type: "deactivate_unsigned",
+      description: "Template para inativar documentos não assinados",
+      jiraTemplate: "h2. Inativação de Documento Não Assinado\n{description}\n\nDocumento ID:\n{document_id}\n\nMotivo:\n{reason}\n\nAção realizada:\n{action_taken}",
+      sqlQuery: `UPDATE tb_processo_documento  
+SET  
+  in_ativo = 'N'  
+WHERE  
+  id_processo_documento IN (109669629, 109669366);`,
+      category: "Documentos"
+    },
+    {
+      id: 27,
+      name: "Análise de Dependência - Processo Preso",
+      type: "stuck_process",
+      description: "Template para análise de processos presos por dependência",
+      jiraTemplate: "h2. Processo Preso por Dependência\n{description}\n\nNúmero do processo:\n{process_number}\n\nTipo de dependência:\n{dependency_type}\n\nSolução aplicada:\n{solution_applied}",
+      sqlQuery: `SELECT *  
+FROM jbpm_variableinstance  
+WHERE  
+  (  
+    name_ ILIKE ANY (ARRAY['prevencao:idDocumentoPrevencao'])  
+    OR bytearrayvalue_ IS NOT NULL  
+  )  
+  AND processinstance_ IN (  
+    SELECT id_proc_inst  
+    FROM core.tb_processo_instance  
+    WHERE id_processo IN (  
+      SELECT id_processo  
+      FROM core.tb_processo  
+      WHERE nr_processo ILIKE '%0011674-42.2019.5.15.0106%'  
+    )  
+  );`,
+      category: "Processo"
+    },
+    {
+      id: 28,
+      name: "Alteração de Nome no Cadastro de Advogado",
+      type: "lawyer_name_change",
+      description: "Template para alteração de nome de advogado (casado/solteiro)",
+      jiraTemplate: "h2. Alteração de Nome de Advogado\n{description}\n\nCPF:\n{cpf}\n\nNome anterior:\n{old_name}\n\nNome atual:\n{new_name}",
+      sqlQuery: `SELECT *  
+FROM tb_usuario_login  
+WHERE ds_login ILIKE '40826565883';  -- id_usuario = 1433496`,
+      category: "Cadastro"
+    },
+    {
+      id: 29,
+      name: "Excluir Perfil de Jus Postulandi para Servidor",
+      type: "remove_jus_postulandi",
+      description: "Template para exclusão de perfil jus postulandi de servidor",
+      jiraTemplate: "h2. Exclusão de Perfil Jus Postulandi\n{description}\n\nCPF do servidor:\n{cpf}\n\nPerfil removido:\n{profile_removed}\n\nStatus:\n{status}",
+      sqlQuery: `DELETE FROM tb_usuario_localizacao  
+WHERE  
+  id_usuario = (  
+    SELECT id_usuario  
+    FROM tb_usuario_login  
+    WHERE ds_login = '01063326192'  
+  )  
+  AND id_papel = 5788;`,
+      category: "Usuários"
+    },
+    {
+      id: 30,
+      name: "Cadastro de Órgão Público",
+      type: "public_entity_registration",
+      description: "Template para cadastro de órgão público",
+      jiraTemplate: "h2. Cadastro de Órgão Público\n{description}\n\nCNPJ:\n{cnpj}\n\nNome do órgão:\n{entity_name}\n\nStatus do cadastro:\n{registration_status}",
+      sqlQuery: `SELECT *  
+FROM tb_usuario_login  
+WHERE ds_login ILIKE '45771474000175';`,
+      category: "Cadastro"
+    },
+    {
+      id: 31,
+      name: "Processo Retornando Múltiplos Registros",
+      type: "multiple_records",
+      description: "Template para processos retornando múltiplos registros na TB_PROCESSO_TAREFA",
+      jiraTemplate: "h2. Processo com Múltiplos Registros\n{description}\n\nNúmero do processo:\n{process_number}\n\nQuantidade de registros:\n{record_count}\n\nAção de correção:\n{correction_action}",
+      sqlQuery: `SELECT  
+  'delete from tb_processo_tarefa ' || CHR(13) ||  
+    'where id_processo_tarefa != ' ||  
+    (  
+      SELECT id_processo_tarefa  
+      FROM tb_processo_tarefa  
+      WHERE id_processo_tarefa IN (  
+        SELECT MIN(id_processo_tarefa)  
+        FROM tb_processo_tarefa  
+        WHERE id_processo_trf = proc.id_processo  
+      )  
+    ) || ' ' || CHR(13) ||  
+    'and id_processo_trf = ' || id_processo || ';'  
+FROM tb_processo proc  
+WHERE nr_processo ILIKE '0012159-19.2022.5.15.0015';`,
+      category: "Processo"
     }
   ];
 
