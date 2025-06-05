@@ -21,9 +21,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormPr
     type: "",
     priority: "",
     environment: "",
-    steps: "",
-    expectedResult: "",
-    actualResult: ""
+    steps: ""
   });
   
   const [uploadedImages, setUploadedImages] = useState<File[]>([]);
@@ -40,9 +38,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormPr
         type: editingTicket.type || "",
         priority: editingTicket.priority || "",
         environment: editingTicket.environment || "",
-        steps: editingTicket.steps || "",
-        expectedResult: editingTicket.expectedResult || "",
-        actualResult: editingTicket.actualResult || ""
+        steps: editingTicket.steps || ""
       });
     }
   }, [editingTicket]);
@@ -92,12 +88,6 @@ ${formData.environment}
 
 h2. Passos para Reproduzir
 ${formData.steps}
-
-h2. Resultado Esperado
-${formData.expectedResult}
-
-h2. Resultado Atual
-${formData.actualResult}
 
 h2. Evidências
 ${uploadedImages.length > 0 ? `${uploadedImages.length} imagem(ns) anexada(s)` : "Nenhuma imagem anexada"}
@@ -217,37 +207,13 @@ h2. Informações Adicionais
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="steps">Passos para Reproduzir</Label>
-                <Textarea
-                  id="steps"
-                  value={formData.steps}
-                  onChange={(e) => handleInputChange("steps", e.target.value)}
-                  placeholder="1. Acesse a tela de login&#10;2. Digite as credenciais&#10;3. Clique em entrar"
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="expectedResult">Resultado Esperado</Label>
-                <Textarea
-                  id="expectedResult"
-                  value={formData.expectedResult}
-                  onChange={(e) => handleInputChange("expectedResult", e.target.value)}
-                  placeholder="O que deveria acontecer..."
-                  rows={3}
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="actualResult">Resultado Atual</Label>
+              <Label htmlFor="steps">Passos para Reproduzir</Label>
               <Textarea
-                id="actualResult"
-                value={formData.actualResult}
-                onChange={(e) => handleInputChange("actualResult", e.target.value)}
-                placeholder="O que está acontecendo atualmente..."
+                id="steps"
+                value={formData.steps}
+                onChange={(e) => handleInputChange("steps", e.target.value)}
+                placeholder="1. Acesse a tela de login&#10;2. Digite as credenciais&#10;3. Clique em entrar"
                 rows={3}
               />
             </div>
