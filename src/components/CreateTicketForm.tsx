@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,41 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormPr
     { value: "media", label: "Média" },
     { value: "alta", label: "Alta" },
     { value: "critica", label: "Crítica" }
+  ];
+
+  // Templates disponíveis (mesma lista dos templates)
+  const availableTemplates = [
+    "Bug de Sistema",
+    "Problema de Performance",
+    "Erro de Integração",
+    "Erro de Acesso/Execução",
+    "Erro na Assinatura de Documento",
+    "Sessão de Julgamento - Erro",
+    "Erro de Movimentação",
+    "Tarefa - Erro de Fluxo",
+    "Cadastro - Erro na Elaboração",
+    "Usuário - Erro de Acesso ao Sistema",
+    "Pauta de Julgamento - Erro",
+    "Redistribuição - Erro",
+    "Peticionamento Avulso - Erro",
+    "Sistema - Correção/Inclusão de Dados",
+    "Audiência - Erro de Assinatura",
+    "Partes do Processo",
+    "Tarefa Atual do Processo",
+    "Processo na Fase Errada",
+    "Documento sem Data de Juntada",
+    "Análise de Dependência - Erro Inesperado",
+    "Partes do Processo sem ID_PAIS",
+    "Colocando Processo no Fluxo",
+    "Count + Fórum por Tipo de Documento (RO)",
+    "Inativar Documento de Decisão",
+    "Levantamento de Advogados e Peritos",
+    "Inativar Documento Não Assinado",
+    "Análise de Dependência - Processo Preso",
+    "Alteração de Nome no Cadastro de Advogado",
+    "Excluir Perfil de Jus Postulandi para Servidor",
+    "Cadastro de Órgão Público",
+    "Processo Retornando Múltiplos Registros"
   ];
 
   const handleInputChange = (field: string, value: string) => {
@@ -136,13 +172,18 @@ h2. Informações Adicionais
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="title">Título do Chamado</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
-                  placeholder="Ex: Sistema de login não está funcionando"
-                  required
-                />
+                <Select value={formData.title} onValueChange={(value) => handleInputChange("title", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o título do chamado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTemplates.map((template) => (
+                      <SelectItem key={template} value={template}>
+                        {template}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2">
