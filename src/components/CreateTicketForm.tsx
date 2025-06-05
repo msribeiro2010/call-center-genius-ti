@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,47 +8,53 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileText, Database, Copy } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Copy, FileText, Database, User, Building } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface CreateTicketFormProps {
-  onTicketCreated: () => void;
-  editingTicket?: any;
-}
-
-const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormProps) => {
+const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?: () => void, editingTicket?: any }) => {
   const [formData, setFormData] = useState({
     title: "",
-    description: "",
     type: "",
+    description: "",
     priority: "",
     environment: "",
-    steps: ""
+    cpf: "",
+    userName: "",
+    orgaoJulgador: ""
   });
-  
-  const [uploadedImages, setUploadedImages] = useState<File[]>([]);
-  const [generatedJiraText, setGeneratedJiraText] = useState("");
-  const [generatedQuery, setGeneratedQuery] = useState("");
+
+  const [generatedText, setGeneratedText] = useState("");
+  const [suggestedQuery, setSuggestedQuery] = useState("");
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+
   const { toast } = useToast();
 
-  // Populate form when editing
   useEffect(() => {
     if (editingTicket) {
       setFormData({
         title: editingTicket.title || "",
-        description: editingTicket.description || "",
         type: editingTicket.type || "",
+        description: editingTicket.description || "",
         priority: editingTicket.priority || "",
         environment: editingTicket.environment || "",
-        steps: editingTicket.steps || ""
+        cpf: editingTicket.cpf || "",
+        userName: editingTicket.userName || "",
+        orgaoJulgador: editingTicket.orgaoJulgador || ""
       });
     }
   }, [editingTicket]);
 
   const ticketTypes = [
-    { value: "duvida", label: "Dúvida", query: "SELECT * FROM logs WHERE error_type = 'QUESTION' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
-    { value: "incidentes", label: "Incidentes", query: "SELECT * FROM logs WHERE error_type = 'INCIDENT' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
-    { value: "melhorias", label: "Melhorias", query: "SELECT feature_requests.*, users.ds_nome FROM feature_requests JOIN users ON feature_requests.user_id = users.id_usuario WHERE status = 'PENDING';" }
+    { value: "duvida", label: "Dúvida" },
+    { value: "incidentes", label: "Incidentes" },
+    { value: "melhorias", label: "Melhorias" }
+  ];
+
+  const environments = [
+    { value: "producao", label: "Produção" },
+    { value: "homologacao", label: "Homologação" },
+    { value: "desenvolvimento", label: "Desenvolvimento" }
   ];
 
   const priorities = [
@@ -96,66 +103,111 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormPr
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    setUploadedImages(prev => [...prev, ...files]);
-  };
-
-  const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const generateJiraText = () => {
-    const selectedType = ticketTypes.find(t => t.value === formData.type);
+  const handleTitleChange = (value: string) => {
+    handleInputChange("title", value);
     
-    const jiraText = `h2. Descrição do Problema
-${formData.description}
-
-h2. Tipo de Chamado
-${selectedType?.label || formData.type}
-
-h2. Prioridade
-${formData.priority}
-
-h2. Ambiente
-${formData.environment}
-
-h2. Passos para Reproduzir
-${formData.steps}
-
-h2. Evidências
-${uploadedImages.length > 0 ? `${uploadedImages.length} imagem(ns) anexada(s)` : "Nenhuma imagem anexada"}
-
-h2. Informações Adicionais
-- Data de abertura: ${new Date().toLocaleDateString('pt-BR')}
-- Criado via: TI Support System`;
-
-    setGeneratedJiraText(jiraText);
-    
-    if (selectedType?.query) {
-      setGeneratedQuery(selectedType.query);
+    // Buscar template correspondente
+    const savedTemplates = localStorage.getItem('ticketTemplates');
+    if (savedTemplates) {
+      const templates = JSON.parse(savedTemplates);
+      const template = templates.find((t: any) => t.name === value);
+      if (template) {
+        setSelectedTemplate(template);
+      }
     }
+  };
+
+  const formatCPF = (value: string) => {
+    // Remove tudo que não é dígito
+    const numericValue = value.replace(/\D/g, '');
+    
+    // Aplica a máscara
+    if (numericValue.length <= 11) {
+      return numericValue
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    return numericValue.slice(0, 11)
+      .replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedCPF = formatCPF(e.target.value);
+    handleInputChange("cpf", formattedCPF);
+  };
+
+  const generateTicketText = () => {
+    if (!selectedTemplate) {
+      toast({
+        title: "Template não encontrado",
+        description: "Selecione um título válido para gerar o texto do chamado.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    let jiraText = selectedTemplate.jiraTemplate;
+    
+    // Substituir variáveis do template
+    jiraText = jiraText.replace(/{description}/g, formData.description);
+    jiraText = jiraText.replace(/{cpf}/g, formData.cpf);
+    jiraText = jiraText.replace(/{userName}/g, formData.userName);
+    jiraText = jiraText.replace(/{orgaoJulgador}/g, formData.orgaoJulgador);
+    jiraText = jiraText.replace(/{environment}/g, formData.environment);
+    jiraText = jiraText.replace(/{priority}/g, formData.priority);
+
+    // Adicionar informações do solicitante
+    const solicitanteInfo = `
+h2. Informações do Solicitante
+*Nome:* ${formData.userName}
+*CPF:* ${formData.cpf}
+*Órgão Julgador:* ${formData.orgaoJulgador}
+*Ambiente:* ${formData.environment}
+*Prioridade:* ${formData.priority}
+
+`;
+
+    const finalText = solicitanteInfo + jiraText;
+    
+    setGeneratedText(finalText);
+    setSuggestedQuery(selectedTemplate.sqlQuery || "");
+
+    toast({
+      title: "Texto gerado!",
+      description: "O texto do chamado JIRA foi gerado com sucesso.",
+    });
   };
 
   const copyToClipboard = (text: string, type: string) => {
     navigator.clipboard.writeText(text);
     toast({
       title: "Copiado!",
-      description: `${type} copiado para a área de transferência`,
+      description: `${type} copiado para a área de transferência.`,
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    generateJiraText();
     
-    // Simular salvamento no banco de dados
-    console.log(editingTicket ? "Atualizando chamado:" : "Salvando chamado:", { ...formData, images: uploadedImages });
-    
+    // Validar campos obrigatórios
+    if (!formData.title || !formData.type || !formData.description || !formData.cpf || !formData.userName || !formData.orgaoJulgador) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     toast({
-      title: editingTicket ? "Chamado atualizado com sucesso!" : "Chamado criado com sucesso!",
-      description: "Texto JIRA e query SQL foram gerados",
+      title: "Chamado criado!",
+      description: "O chamado foi criado com sucesso.",
     });
+    
+    if (onTicketCreated) {
+      onTicketCreated();
+    }
   };
 
   return (
@@ -165,196 +217,217 @@ h2. Informações Adicionais
           <CardTitle className="text-2xl text-gray-800">
             {editingTicket ? "Editar Chamado" : "Criar Novo Chamado"}
           </CardTitle>
-          <CardDescription>Preencha as informações para gerar automaticamente o texto JIRA e queries SQL</CardDescription>
+          <CardDescription>
+            Preencha as informações do chamado para gerar automaticamente o texto JIRA e sugestões de queries SQL
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título do Chamado</Label>
-                <Select value={formData.title} onValueChange={(value) => handleInputChange("title", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o título do chamado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableTemplates.map((template) => (
-                      <SelectItem key={template} value={template}>
-                        {template}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="type">Tipo de Chamado</Label>
-                <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ticketTypes.map((type) => (
-                      <SelectItem key={type.value} value={type.value}>
-                        {type.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorities.map((priority) => (
-                      <SelectItem key={priority.value} value={priority.value}>
-                        {priority.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="environment">Ambiente</Label>
-                <Select value={formData.environment} onValueChange={(value) => handleInputChange("environment", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o ambiente" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="producao">Produção</SelectItem>
-                    <SelectItem value="homologacao">Homologação</SelectItem>
-                    <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
-                    <SelectItem value="teste">Teste</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Descrição Detalhada</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Descreva o problema em detalhes..."
-                rows={4}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="steps">Passos para Reproduzir</Label>
-              <Textarea
-                id="steps"
-                value={formData.steps}
-                onChange={(e) => handleInputChange("steps", e.target.value)}
-                placeholder="1. Acesse a tela de login&#10;2. Digite as credenciais&#10;3. Clique em entrar"
-                rows={3}
-              />
-            </div>
-
-            {/* Upload de Imagens */}
+            {/* Informações do Solicitante */}
             <div className="space-y-4">
-              <Label>Imagens de Erro</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                <Upload className="mx-auto h-12 w-12 text-gray-400" />
-                <div className="mt-2">
-                  <Label htmlFor="images" className="cursor-pointer text-blue-600 hover:text-blue-500">
-                    Clique para fazer upload
-                  </Label>
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Informações do Solicitante</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="userName">Nome Completo *</Label>
                   <Input
-                    id="images"
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
+                    id="userName"
+                    value={formData.userName}
+                    onChange={(e) => handleInputChange("userName", e.target.value)}
+                    placeholder="Ex: João Silva Santos"
+                    required
                   />
                 </div>
-                <p className="text-sm text-gray-500">PNG, JPG, GIF até 10MB cada</p>
-              </div>
 
-              {uploadedImages.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {uploadedImages.map((file, index) => (
-                    <div key={index} className="relative">
-                      <div className="bg-gray-100 rounded-lg p-2 text-center">
-                        <FileText className="mx-auto h-8 w-8 text-gray-500" />
-                        <p className="text-xs text-gray-600 mt-1 truncate">{file.name}</p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
-                        onClick={() => removeImage(index)}
-                      >
-                        ×
-                      </Button>
-                    </div>
-                  ))}
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF *</Label>
+                  <Input
+                    id="cpf"
+                    value={formData.cpf}
+                    onChange={handleCPFChange}
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    required
+                  />
                 </div>
-              )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="orgaoJulgador">Órgão Julgador (OJ) *</Label>
+                  <Input
+                    id="orgaoJulgador"
+                    value={formData.orgaoJulgador}
+                    onChange={(e) => handleInputChange("orgaoJulgador", e.target.value)}
+                    placeholder="Ex: 1ª Vara do Trabalho de São Paulo"
+                    required
+                  />
+                </div>
+              </div>
             </div>
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-              {editingTicket ? "Atualizar Chamado JIRA" : "Gerar Chamado JIRA"}
-            </Button>
+            <Separator />
+
+            {/* Informações do Chamado */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <FileText className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Detalhes do Chamado</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Título do Chamado *</Label>
+                  <Select value={formData.title} onValueChange={handleTitleChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o título do chamado" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableTemplates.map((template) => (
+                        <SelectItem key={template} value={template}>
+                          {template}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo de Chamado *</Label>
+                  <Select value={formData.type} onValueChange={(value) => handleInputChange("type", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ticketTypes.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Prioridade *</Label>
+                  <Select value={formData.priority} onValueChange={(value) => handleInputChange("priority", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a prioridade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorities.map((priority) => (
+                        <SelectItem key={priority.value} value={priority.value}>
+                          {priority.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="environment">Ambiente</Label>
+                  <Select value={formData.environment} onValueChange={(value) => handleInputChange("environment", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o ambiente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {environments.map((env) => (
+                        <SelectItem key={env.value} value={env.value}>
+                          {env.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição Detalhada *</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  placeholder="Descreva detalhadamente o problema, erro ou solicitação..."
+                  rows={6}
+                  required
+                />
+                <p className="text-sm text-gray-500">
+                  Inclua o máximo de detalhes possível: mensagens de erro, passos para reproduzir, comportamento esperado, etc.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-between">
+              <Button 
+                type="button" 
+                onClick={generateTicketText}
+                className="bg-green-600 hover:bg-green-700"
+                disabled={!formData.title || !formData.description}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Gerar Texto JIRA
+              </Button>
+              
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                {editingTicket ? "Atualizar" : "Criar"} Chamado
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
 
-      {/* Resultado Gerado */}
-      {generatedJiraText && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-600" />
-                <span>Texto JIRA Gerado</span>
-              </CardTitle>
-              <CardDescription>Texto formatado para criar o chamado no JIRA</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
-                <pre className="text-sm whitespace-pre-wrap">{generatedJiraText}</pre>
-              </div>
-              <Button
-                onClick={() => copyToClipboard(generatedJiraText, "Texto JIRA")}
-                className="mt-4 w-full"
-                variant="outline"
-              >
-                <Copy className="h-4 w-4 mr-2" />
-                Copiar Texto JIRA
-              </Button>
-            </CardContent>
-          </Card>
-
-          {generatedQuery && (
+      {/* Generated Content */}
+      {(generatedText || suggestedQuery) && (
+        <div className="space-y-6">
+          {generatedText && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Database className="h-5 w-5 text-green-600" />
-                  <span>Query SQL Sugerida</span>
-                </CardTitle>
-                <CardDescription>Query para investigação no banco de dados</CardDescription>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center space-x-2">
+                    <FileText className="h-5 w-5 text-blue-600" />
+                    <span>Texto Gerado para JIRA</span>
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(generatedText, "Texto JIRA")}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <pre className="text-sm">{generatedQuery}</pre>
+                <div className="bg-gray-50 p-4 rounded-lg max-h-96 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm">{generatedText}</pre>
                 </div>
-                <Button
-                  onClick={() => copyToClipboard(generatedQuery, "Query SQL")}
-                  className="mt-4 w-full"
-                  variant="outline"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copiar Query SQL
-                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {suggestedQuery && (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center space-x-2">
+                    <Database className="h-5 w-5 text-green-600" />
+                    <span>Query SQL Sugerida</span>
+                  </CardTitle>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => copyToClipboard(suggestedQuery, "Query SQL")}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copiar
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-gray-900 text-green-400 p-4 rounded-lg max-h-64 overflow-y-auto">
+                  <pre className="whitespace-pre-wrap text-sm font-mono">{suggestedQuery}</pre>
+                </div>
               </CardContent>
             </Card>
           )}
@@ -365,3 +438,4 @@ h2. Informações Adicionais
 };
 
 export default CreateTicketForm;
+
