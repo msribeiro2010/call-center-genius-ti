@@ -44,11 +44,9 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: CreateTicketFormPr
   }, [editingTicket]);
 
   const ticketTypes = [
-    { value: "bug", label: "Bug/Erro", query: "SELECT * FROM logs WHERE error_type = 'APPLICATION' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
-    { value: "performance", label: "Performance", query: "SELECT query_time, query FROM slow_queries WHERE execution_time > 5 ORDER BY execution_time DESC LIMIT 10;" },
-    { value: "access", label: "Acesso/Permissão", query: "SELECT user_id, role, last_login FROM users WHERE status = 'ACTIVE' AND role = ?;" },
-    { value: "integration", label: "Integração", query: "SELECT service_name, status, last_check FROM service_health WHERE status != 'UP';" },
-    { value: "data", label: "Dados/Relatório", query: "SELECT table_name, row_count, last_updated FROM table_stats WHERE last_updated < NOW() - INTERVAL 1 DAY;" }
+    { value: "duvida", label: "Dúvida", query: "SELECT * FROM logs WHERE error_type = 'QUESTION' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
+    { value: "incidentes", label: "Incidentes", query: "SELECT * FROM logs WHERE error_type = 'INCIDENT' AND timestamp >= NOW() - INTERVAL 24 HOUR;" },
+    { value: "melhorias", label: "Melhorias", query: "SELECT feature_requests.*, users.ds_nome FROM feature_requests JOIN users ON feature_requests.user_id = users.id_usuario WHERE status = 'PENDING';" }
   ];
 
   const priorities = [
