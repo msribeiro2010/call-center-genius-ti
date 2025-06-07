@@ -19,6 +19,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
     environment: "",
     cpf: "",
     userName: "",
+    perfil: "",
     orgaoJulgador: ""
   });
 
@@ -38,6 +39,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
         environment: editingTicket.environment || "",
         cpf: editingTicket.cpf || "",
         userName: editingTicket.userName || "",
+        perfil: editingTicket.perfil || "",
         orgaoJulgador: editingTicket.orgaoJulgador || ""
       });
     }
@@ -60,6 +62,17 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
     { value: "media", label: "Média" },
     { value: "alta", label: "Alta" },
     { value: "critica", label: "Crítica" }
+  ];
+
+  const perfis = [
+    { value: "servidor", label: "Servidor" },
+    { value: "diretor-secretaria", label: "Diretor de Secretaria" },
+    { value: "magistrado", label: "Magistrado" },
+    { value: "assessor", label: "Assessor" },
+    { value: "perito", label: "Perito" },
+    { value: "estagiario", label: "Estagiário" },
+    { value: "procurador", label: "Procurador" },
+    { value: "oficial-justica", label: "Oficial de Justiça" }
   ];
 
   // Assuntos dos chamados padronizados
@@ -301,6 +314,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
       const basicText = `h2. Informações do Solicitante
 *Nome:* ${formData.userName}
 *CPF:* ${formData.cpf}
+*Perfil:* ${formData.perfil}
 *Órgão Julgador:* ${formData.orgaoJulgador}
 *Ambiente:* ${formData.environment}
 *Prioridade:* ${formData.priority}
@@ -333,6 +347,7 @@ h2. Informações Técnicas
     jiraText = jiraText.replace(/{description}/g, formData.description);
     jiraText = jiraText.replace(/{cpf}/g, formData.cpf);
     jiraText = jiraText.replace(/{userName}/g, formData.userName);
+    jiraText = jiraText.replace(/{perfil}/g, formData.perfil);
     jiraText = jiraText.replace(/{orgaoJulgador}/g, formData.orgaoJulgador);
     jiraText = jiraText.replace(/{environment}/g, formData.environment);
     jiraText = jiraText.replace(/{priority}/g, formData.priority);
@@ -341,6 +356,7 @@ h2. Informações Técnicas
     const solicitanteInfo = `h2. Informações do Solicitante
 *Nome:* ${formData.userName}
 *CPF:* ${formData.cpf}
+*Perfil:* ${formData.perfil}
 *Órgão Julgador:* ${formData.orgaoJulgador}
 *Ambiente:* ${formData.environment}
 *Prioridade:* ${formData.priority}
@@ -372,7 +388,7 @@ h2. Informações Técnicas
     e.preventDefault();
     
     // Validar campos obrigatórios
-    if (!formData.title || !formData.type || !formData.description || !formData.cpf || !formData.userName || !formData.orgaoJulgador) {
+    if (!formData.title || !formData.type || !formData.description || !formData.cpf || !formData.userName || !formData.perfil || !formData.orgaoJulgador) {
       toast({
         title: "Campos obrigatórios",
         description: "Preencha todos os campos obrigatórios.",
@@ -436,7 +452,23 @@ h2. Informações Técnicas
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="orgaoJulgador">Órgão Julgador (OJ) *</Label>
+                  <Label htmlFor="perfil">Perfil *</Label>
+                  <Select value={formData.perfil} onValueChange={(value) => handleInputChange("perfil", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione seu perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {perfis.map((perfil) => (
+                        <SelectItem key={perfil.value} value={perfil.value}>
+                          {perfil.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2 md:col-span-2 lg:col-span-3">
+                  <Label htmlFor="orgaoJulgador">Órgão Julgador (OJ) onde trabalha *</Label>
                   <Input
                     id="orgaoJulgador"
                     value={formData.orgaoJulgador}
