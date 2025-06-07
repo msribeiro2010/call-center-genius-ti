@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,16 +102,26 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
   };
 
   const handleTitleChange = (value: string) => {
+    console.log("Título selecionado:", value);
     handleInputChange("title", value);
     
     // Buscar template correspondente
     const savedTemplates = localStorage.getItem('ticketTemplates');
+    console.log("Templates salvos no localStorage:", savedTemplates);
+    
     if (savedTemplates) {
       const templates = JSON.parse(savedTemplates);
       const template = templates.find((t: any) => t.name === value);
+      console.log("Template encontrado:", template);
       if (template) {
         setSelectedTemplate(template);
+      } else {
+        console.log("Template não encontrado para o título:", value);
+        setSelectedTemplate(null);
       }
+    } else {
+      console.log("Nenhum template salvo no localStorage");
+      setSelectedTemplate(null);
     }
   };
 
@@ -138,15 +146,43 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
   };
 
   const generateTicketText = () => {
+    console.log("Iniciando geração do texto JIRA");
+    console.log("Dados do formulário:", formData);
+    console.log("Template selecionado:", selectedTemplate);
+
+    // Se não há template, vamos criar um texto básico
     if (!selectedTemplate) {
+      console.log("Criando texto básico sem template");
+      
+      const basicText = `h2. Informações do Solicitante
+*Nome:* ${formData.userName}
+*CPF:* ${formData.cpf}
+*Órgão Julgador:* ${formData.orgaoJulgador}
+*Ambiente:* ${formData.environment}
+*Prioridade:* ${formData.priority}
+
+h2. Descrição do Problema
+*Tipo:* ${formData.type}
+*Título:* ${formData.title}
+
+*Descrição Detalhada:*
+${formData.description}
+
+h2. Informações Técnicas
+*Ambiente:* ${formData.environment}
+*Prioridade:* ${formData.priority}`;
+
+      setGeneratedText(basicText);
+      setSuggestedQuery("");
+
       toast({
-        title: "Template não encontrado",
-        description: "Selecione um título válido para gerar o texto do chamado.",
-        variant: "destructive"
+        title: "Texto gerado!",
+        description: "O texto do chamado JIRA foi gerado com sucesso.",
       });
       return;
     }
 
+    // Usar template se disponível
     let jiraText = selectedTemplate.jiraTemplate;
     
     // Substituir variáveis do template
@@ -158,8 +194,7 @@ const CreateTicketForm = ({ onTicketCreated, editingTicket }: { onTicketCreated?
     jiraText = jiraText.replace(/{priority}/g, formData.priority);
 
     // Adicionar informações do solicitante
-    const solicitanteInfo = `
-h2. Informações do Solicitante
+    const solicitanteInfo = `h2. Informações do Solicitante
 *Nome:* ${formData.userName}
 *CPF:* ${formData.cpf}
 *Órgão Julgador:* ${formData.orgaoJulgador}
@@ -172,6 +207,8 @@ h2. Informações do Solicitante
     
     setGeneratedText(finalText);
     setSuggestedQuery(selectedTemplate.sqlQuery || "");
+
+    console.log("Texto gerado:", finalText);
 
     toast({
       title: "Texto gerado!",
@@ -438,4 +475,3 @@ h2. Informações do Solicitante
 };
 
 export default CreateTicketForm;
-
