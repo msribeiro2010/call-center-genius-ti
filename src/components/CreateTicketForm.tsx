@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -22,7 +22,12 @@ const segundoGrauOJs = [
   // ... keep existing code (todos os outros OJs do 2º grau)
 ];
 
-const CreateTicketForm = () => {
+interface CreateTicketFormProps {
+  onTicketCreated?: () => void;
+  editingTicket?: any;
+}
+
+const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, editingTicket }) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
     chamadoOrigem: '',
@@ -35,6 +40,22 @@ const CreateTicketForm = () => {
     prioridade: '',
     tipo: ''
   });
+
+  useEffect(() => {
+    if (editingTicket) {
+      setFormData({
+        chamadoOrigem: editingTicket.chamadoOrigem || '',
+        numeroProcesso: editingTicket.numeroProcesso || '',
+        grau: editingTicket.grau || '',
+        orgaoJulgador: editingTicket.orgaoJulgador || '',
+        ojDetectada: editingTicket.ojDetectada || '',
+        titulo: editingTicket.titulo || editingTicket.title || '',
+        descricao: editingTicket.descricao || '',
+        prioridade: editingTicket.prioridade || editingTicket.priority || '',
+        tipo: editingTicket.tipo || editingTicket.type || ''
+      });
+    }
+  }, [editingTicket]);
 
   const detectarOJ = (numeroProcesso: string) => {
     // Extrair os últimos 4 dígitos do processo
@@ -105,7 +126,7 @@ const CreateTicketForm = () => {
     console.log('Dados do chamado:', formData);
     toast({
       title: "Sucesso!",
-      description: "Chamado criado com sucesso"
+      description: editingTicket ? "Chamado atualizado com sucesso" : "Chamado criado com sucesso"
     });
     
     // Reset form
@@ -120,6 +141,11 @@ const CreateTicketForm = () => {
       prioridade: '',
       tipo: ''
     });
+
+    // Call the callback function if provided
+    if (onTicketCreated) {
+      onTicketCreated();
+    }
   };
 
   const ojOptions = formData.grau === '1' ? primeiroGrauOJs : 
