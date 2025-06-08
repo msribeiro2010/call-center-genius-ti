@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -17,7 +18,7 @@ const titulosPadronizados = [
   "Advogado – Painel do Advogado / Procurador – Erro",
   "Agrupadores – Erro",
   "Área de Zoneamento – Erro em Configuração do Oficial de Justiça",
-  "Assinador não Carrega – Não ativa o botão "Entrar"",
+  "Assinador não Carrega – Não ativa o botão \"Entrar\"",
   "Assinatura de Acórdão – Erro",
   "Assinatura de Ata – Erro",
   "Assuntos da Ação – Competência",
