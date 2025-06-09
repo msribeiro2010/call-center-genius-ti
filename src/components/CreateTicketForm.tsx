@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -7,6 +6,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from './ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import ResponseTemplates from './ResponseTemplates';
 
 // Lista de títulos padronizados dos chamados
@@ -224,11 +224,11 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   useEffect(() => {
     if (editingTicket) {
       setFormData({
-        chamadoOrigem: editingTicket.chamadoOrigem || '',
-        numeroProcesso: editingTicket.numeroProcesso || '',
+        chamadoOrigem: editingTicket.chamado_origem || editingTicket.chamadoOrigem || '',
+        numeroProcesso: editingTicket.numero_processo || editingTicket.numeroProcesso || '',
         grau: editingTicket.grau || '',
-        orgaoJulgador: editingTicket.orgaoJulgador || '',
-        ojDetectada: editingTicket.ojDetectada || '',
+        orgaoJulgador: editingTicket.orgao_julgador || editingTicket.orgaoJulgador || '',
+        ojDetectada: editingTicket.oj_detectada || editingTicket.ojDetectada || '',
         titulo: editingTicket.titulo || editingTicket.title || '',
         descricao: editingTicket.descricao || '',
         prioridade: editingTicket.prioridade || editingTicket.priority || '',
@@ -291,7 +291,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.titulo || !formData.descricao) {
@@ -303,28 +303,79 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       return;
     }
 
-    console.log('Dados do chamado:', formData);
-    toast({
-      title: "Sucesso!",
-      description: editingTicket ? "Chamado atualizado com sucesso" : "Chamado criado com sucesso"
-    });
-    
-    // Reset form
-    setFormData({
-      chamadoOrigem: '',
-      numeroProcesso: '',
-      grau: '',
-      orgaoJulgador: '',
-      ojDetectada: '',
-      titulo: '',
-      descricao: '',
-      prioridade: '',
-      tipo: ''
-    });
+    try {
+      if (editingTicket) {
+        // Atualizar chamado existente
+        const { error } = await supabase
+          .from('chamados')
+          .update({
+            chamado_origem: formData.chamadoOrigem,
+            numero_processo: formData.numeroProcesso,
+            grau: formData.grau,
+            orgao_julgador: formData.orgaoJulgador,
+            oj_detectada: formData.ojDetectada,
+            titulo: formData.titulo,
+            descricao: formData.descricao,
+            prioridade: formData.prioridade,
+            tipo: formData.tipo,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', editingTicket.id);
 
-    // Call the callback function if provided
-    if (onTicketCreated) {
-      onTicketCreated();
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso!",
+          description: "Chamado atualizado com sucesso"
+        });
+      } else {
+        // Criar novo chamado
+        const { error } = await supabase
+          .from('chamados')
+          .insert({
+            chamado_origem: formData.chamadoOrigem,
+            numero_processo: formData.numeroProcesso,
+            grau: formData.grau,
+            orgao_julgador: formData.orgaoJulgador,
+            oj_detectada: formData.ojDetectada,
+            titulo: formData.titulo,
+            descricao: formData.descricao,
+            prioridade: formData.prioridade,
+            tipo: formData.tipo
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso!",
+          description: "Chamado criado e salvo no banco de dados"
+        });
+      }
+      
+      // Reset form
+      setFormData({
+        chamadoOrigem: '',
+        numeroProcesso: '',
+        grau: '',
+        orgaoJulgador: '',
+        ojDetectada: '',
+        titulo: '',
+        descricao: '',
+        prioridade: '',
+        tipo: ''
+      });
+
+      // Call the callback function if provided
+      if (onTicketCreated) {
+        onTicketCreated();
+      }
+    } catch (error) {
+      console.error('Erro ao salvar chamado:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar chamado no banco de dados",
+        variant: "destructive"
+      });
     }
   };
 

@@ -1,35 +1,49 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { Plus, FileText, Database, Image as ImageIcon, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, FileText, Database, Image as ImageIcon, Search, Edit, Trash2, BookOpen } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketTemplates from "@/components/TicketTemplates";
 import TicketHistory from "@/components/TicketHistory";
+import KnowledgeBase from "@/components/KnowledgeBase";
 
 const Index = () => {
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [tickets, setTickets] = useState([
-    {
-      id: 1,
-      title: "Sistema de login não funcionando",
-      type: "Bug",
-      status: "Aberto",
-      created: "2024-06-04",
-      priority: "Alta"
-    },
-    {
-      id: 2,
-      title: "Lentidão no sistema de vendas",
-      type: "Performance",
-      status: "Em andamento",
-      created: "2024-06-03",
-      priority: "Média"
-    }
-  ]);
+  const [tickets, setTickets] = useState([]);
   const [editingTicket, setEditingTicket] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadTickets();
+  }, []);
+
+  const loadTickets = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('chamados')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      setTickets(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar chamados:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar chamados do banco de dados",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const stats = {
     totalTickets: tickets.length,
@@ -43,15 +57,36 @@ const Index = () => {
     setActiveTab("create");
   };
 
-  const handleDeleteTicket = (ticketId) => {
+  const handleDeleteTicket = async (ticketId) => {
     if (confirm("Tem certeza que deseja excluir este chamado?")) {
-      setTickets(tickets.filter(t => t.id !== ticketId));
+      try {
+        const { error } = await supabase
+          .from('chamados')
+          .delete()
+          .eq('id', ticketId);
+
+        if (error) throw error;
+
+        setTickets(tickets.filter(t => t.id !== ticketId));
+        toast({
+          title: "Sucesso",
+          description: "Chamado excluído com sucesso"
+        });
+      } catch (error) {
+        console.error('Erro ao excluir chamado:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir chamado",
+          variant: "destructive"
+        });
+      }
     }
   };
 
   const handleTicketCreated = () => {
     setEditingTicket(null);
     setActiveTab("dashboard");
+    loadTickets(); // Recarregar lista de chamados
   };
 
   const renderContent = () => {
@@ -62,6 +97,8 @@ const Index = () => {
         return <TicketTemplates />;
       case "history":
         return <TicketHistory tickets={tickets} />;
+      case "knowledge":
+        return <KnowledgeBase />;
       default:
         return (
           <div className="space-y-6">
@@ -112,10 +149,10 @@ const Index = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800">Ações Rápidas</CardTitle>
-                <CardDescription>Gerencie seus chamados e templates de forma eficiente</CardDescription>
+                <CardDescription>Gerencie seus chamados e acesse a base de conhecimento</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <Button 
                     onClick={() => {
                       setEditingTicket(null);
@@ -128,12 +165,20 @@ const Index = () => {
                   </Button>
                   
                   <Button 
+                    onClick={() => setActiveTab("knowledge")}
+                    className="h-24 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center space-y-2"
+                  >
+                    <BookOpen className="h-6 w-6" />
+                    <span>Base de Conhecimento</span>
+                  </Button>
+                  
+                  <Button 
                     onClick={() => setActiveTab("templates")}
                     variant="outline"
                     className="h-24 border-2 border-blue-200 hover:bg-blue-50 flex flex-col items-center justify-center space-y-2"
                   >
                     <FileText className="h-6 w-6 text-blue-600" />
-                    <span>Gerenciar Templates</span>
+                    <span>Templates</span>
                   </Button>
                   
                   <Button 
@@ -152,45 +197,68 @@ const Index = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800">Chamados Recentes</CardTitle>
-                <CardDescription>Visualize os últimos chamados criados - Clique com o botão direito para editar ou excluir</CardDescription>
+                <CardDescription>
+                  {loading ? "Carregando chamados..." : "Visualize os últimos chamados criados - Clique com o botão direito para editar ou excluir"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {tickets.map((ticket) => (
-                    <ContextMenu key={ticket.id}>
-                      <ContextMenuTrigger>
-                        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                          <div className="flex-1">
-                            <h3 className="font-medium text-gray-900">{ticket.title}</h3>
-                            <p className="text-sm text-gray-500">Criado em {ticket.created}</p>
+                {loading ? (
+                  <div className="text-center py-8">Carregando...</div>
+                ) : tickets.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum chamado encontrado. Crie seu primeiro chamado!
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {tickets.map((ticket) => (
+                      <ContextMenu key={ticket.id}>
+                        <ContextMenuTrigger>
+                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+                            <div className="flex-1">
+                              <h3 className="font-medium text-gray-900">{ticket.titulo}</h3>
+                              <p className="text-sm text-gray-500">
+                                Criado em {new Date(ticket.created_at).toLocaleDateString('pt-BR')}
+                              </p>
+                              {ticket.numero_processo && (
+                                <p className="text-sm text-gray-600">Processo: {ticket.numero_processo}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {ticket.prioridade && (
+                                <Badge variant={
+                                  ticket.prioridade === "critica" ? "destructive" : 
+                                  ticket.prioridade === "alta" ? "destructive" : 
+                                  ticket.prioridade === "media" ? "default" : "secondary"
+                                }>
+                                  {ticket.prioridade}
+                                </Badge>
+                              )}
+                              {ticket.tipo && (
+                                <Badge variant="outline">{ticket.tipo}</Badge>
+                              )}
+                              <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
+                                {ticket.status}
+                              </Badge>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <Badge variant={ticket.priority === "Alta" ? "destructive" : ticket.priority === "Média" ? "default" : "secondary"}>
-                              {ticket.priority}
-                            </Badge>
-                            <Badge variant="outline">{ticket.type}</Badge>
-                            <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
-                              {ticket.status}
-                            </Badge>
-                          </div>
-                        </div>
-                      </ContextMenuTrigger>
-                      <ContextMenuContent>
-                        <ContextMenuItem onClick={() => handleEditTicket(ticket)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar Chamado
-                        </ContextMenuItem>
-                        <ContextMenuItem 
-                          onClick={() => handleDeleteTicket(ticket.id)}
-                          className="text-red-600 focus:text-red-600"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Excluir Chamado
-                        </ContextMenuItem>
-                      </ContextMenuContent>
-                    </ContextMenu>
-                  ))}
-                </div>
+                        </ContextMenuTrigger>
+                        <ContextMenuContent>
+                          <ContextMenuItem onClick={() => handleEditTicket(ticket)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Editar Chamado
+                          </ContextMenuItem>
+                          <ContextMenuItem 
+                            onClick={() => handleDeleteTicket(ticket.id)}
+                            className="text-red-600 focus:text-red-600"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir Chamado
+                          </ContextMenuItem>
+                        </ContextMenuContent>
+                      </ContextMenu>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -222,6 +290,13 @@ const Index = () => {
                 className={activeTab === "create" ? "bg-blue-600 text-white" : ""}
               >
                 Criar Chamado
+              </Button>
+              <Button
+                onClick={() => setActiveTab("knowledge")}
+                variant={activeTab === "knowledge" ? "default" : "outline"}
+                className={activeTab === "knowledge" ? "bg-blue-600 text-white" : ""}
+              >
+                Base de Conhecimento
               </Button>
               <Button
                 onClick={() => setActiveTab("templates")}

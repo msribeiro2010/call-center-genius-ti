@@ -9,7 +9,93 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      base_conhecimento: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          id: string
+          problema_descricao: string
+          solucao: string
+          tags: string[] | null
+          titulo: string
+          updated_at: string
+          util_count: number | null
+          visualizacoes: number | null
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          problema_descricao: string
+          solucao: string
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string
+          util_count?: number | null
+          visualizacoes?: number | null
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          problema_descricao?: string
+          solucao?: string
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string
+          util_count?: number | null
+          visualizacoes?: number | null
+        }
+        Relationships: []
+      }
+      chamados: {
+        Row: {
+          chamado_origem: string | null
+          created_at: string
+          descricao: string
+          grau: string | null
+          id: string
+          numero_processo: string | null
+          oj_detectada: string | null
+          orgao_julgador: string | null
+          prioridade: string | null
+          status: string | null
+          tipo: string | null
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          chamado_origem?: string | null
+          created_at?: string
+          descricao: string
+          grau?: string | null
+          id?: string
+          numero_processo?: string | null
+          oj_detectada?: string | null
+          orgao_julgador?: string | null
+          prioridade?: string | null
+          status?: string | null
+          tipo?: string | null
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          chamado_origem?: string | null
+          created_at?: string
+          descricao?: string
+          grau?: string | null
+          id?: string
+          numero_processo?: string | null
+          oj_detectada?: string | null
+          orgao_julgador?: string | null
+          prioridade?: string | null
+          status?: string | null
+          tipo?: string | null
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
