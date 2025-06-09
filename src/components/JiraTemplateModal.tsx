@@ -33,30 +33,6 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     });
   };
 
-  const copyAllTemplate = () => {
-    const fullTemplate = `
-RESUMO: ${ticketData.titulo}
-
-TIPO DE ISSUE: ${ticketData.tipo || 'Incident'}
-
-PRIORIDADE: ${ticketData.prioridade || 'Medium'}
-
-DESCRIÇÃO:
-${ticketData.descricao}
-
-INFORMAÇÕES ADICIONAIS:
-- Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
-- Número do Processo: ${ticketData.numeroProcesso || 'N/A'}
-- Grau: ${ticketData.grau ? `${ticketData.grau}º Grau` : 'N/A'}
-- Órgão Julgador: ${ticketData.orgaoJulgador || 'N/A'}
-- OJ Detectada: ${ticketData.ojDetectada || 'N/A'}
-
-Data de Criação: ${new Date().toLocaleDateString('pt-BR')}
-    `.trim();
-
-    copyToClipboard(fullTemplate, 'Template completo');
-  };
-
   const formatPriority = (prioridade: string) => {
     const priorityMap: { [key: string]: string } = {
       'baixa': 'Low',
@@ -75,6 +51,31 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}
       'mudanca': 'Change'
     };
     return typeMap[tipo] || 'Incident';
+  };
+
+  const generateFullTemplate = () => {
+    return `RESUMO: ${ticketData.titulo}
+
+TIPO DE ISSUE: ${formatType(ticketData.tipo)}
+
+PRIORIDADE: ${formatPriority(ticketData.prioridade)}
+
+DESCRIÇÃO:
+${ticketData.descricao}
+
+INFORMAÇÕES ADICIONAIS:
+- Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
+- Número do Processo: ${ticketData.numeroProcesso || 'N/A'}
+- Grau: ${ticketData.grau ? `${ticketData.grau}º Grau` : 'N/A'}
+- Órgão Julgador: ${ticketData.orgaoJulgador || 'N/A'}
+- OJ Detectada: ${ticketData.ojDetectada || 'N/A'}
+
+Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
+  };
+
+  const copyAllTemplate = () => {
+    const fullTemplate = generateFullTemplate();
+    copyToClipboard(fullTemplate, 'Template completo');
   };
 
   const CopyField: React.FC<{ label: string; value: string; className?: string }> = ({ label, value, className = "" }) => (
@@ -196,23 +197,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}
             <CardContent>
               <div className="bg-gray-50 p-4 rounded-lg border">
                 <pre className="text-sm whitespace-pre-wrap font-mono">
-{`RESUMO: ${ticketData.titulo}
-
-TIPO DE ISSUE: ${formatType(ticketData.tipo)}
-
-PRIORIDADE: ${formatPriority(ticketData.prioridade)}
-
-DESCRIÇÃO:
-${ticketData.descricao}
-
-INFORMAÇÕES ADICIONAIS:
-- Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
-- Número do Processo: ${ticketData.numeroProcesso || 'N/A'}
-- Grau: ${ticketData.grau ? `${ticketData.grau}º Grau` : 'N/A'}
-- Órgão Julgador: ${ticketData.orgaoJulgador || 'N/A'}
-- OJ Detectada: ${ticketData.ojDetectada || 'N/A'}
-
-Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`}
+                  {generateFullTemplate()}
                 </pre>
               </div>
             </CardContent>

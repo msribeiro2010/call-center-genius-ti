@@ -1,16 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
-import { Plus, FileText, Database, Image as ImageIcon, Search, Edit, Trash2, BookOpen } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import TicketTemplates from "@/components/TicketTemplates";
 import TicketHistory from "@/components/TicketHistory";
 import KnowledgeBase from "@/components/KnowledgeBase";
+import StatsCards from "@/components/StatsCards";
+import QuickActions from "@/components/QuickActions";
+import RecentTickets from "@/components/RecentTickets";
 
 const Index = () => {
   const { toast } = useToast();
@@ -89,6 +88,11 @@ const Index = () => {
     loadTickets(); // Recarregar lista de chamados
   };
 
+  const handleCreateTicket = () => {
+    setEditingTicket(null);
+    setActiveTab("create");
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case "create":
@@ -102,165 +106,21 @@ const Index = () => {
       default:
         return (
           <div className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-blue-700">Total de Chamados</CardTitle>
-                  <FileText className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-800">{stats.totalTickets}</div>
-                </CardContent>
-              </Card>
+            <StatsCards stats={stats} />
+            
+            <QuickActions 
+              onCreateTicket={handleCreateTicket}
+              onOpenKnowledge={() => setActiveTab("knowledge")}
+              onOpenTemplates={() => setActiveTab("templates")}
+              onOpenHistory={() => setActiveTab("history")}
+            />
 
-              <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-orange-700">Chamados Abertos</CardTitle>
-                  <Search className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-orange-800">{stats.openTickets}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-green-700">Em Andamento</CardTitle>
-                  <Database className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-800">{stats.inProgress}</div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-purple-700">Templates</CardTitle>
-                  <ImageIcon className="h-4 w-4 text-purple-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-purple-800">{stats.templates}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-gray-800">Ações Rápidas</CardTitle>
-                <CardDescription>Gerencie seus chamados e acesse a base de conhecimento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Button 
-                    onClick={() => {
-                      setEditingTicket(null);
-                      setActiveTab("create");
-                    }}
-                    className="h-24 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center space-y-2"
-                  >
-                    <Plus className="h-6 w-6" />
-                    <span>Novo Chamado</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("knowledge")}
-                    className="h-24 bg-green-600 hover:bg-green-700 text-white flex flex-col items-center justify-center space-y-2"
-                  >
-                    <BookOpen className="h-6 w-6" />
-                    <span>Base de Conhecimento</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("templates")}
-                    variant="outline"
-                    className="h-24 border-2 border-blue-200 hover:bg-blue-50 flex flex-col items-center justify-center space-y-2"
-                  >
-                    <FileText className="h-6 w-6 text-blue-600" />
-                    <span>Templates</span>
-                  </Button>
-                  
-                  <Button 
-                    onClick={() => setActiveTab("history")}
-                    variant="outline"
-                    className="h-24 border-2 border-gray-200 hover:bg-gray-50 flex flex-col items-center justify-center space-y-2"
-                  >
-                    <Search className="h-6 w-6 text-gray-600" />
-                    <span>Histórico</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Tickets */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl text-gray-800">Chamados Recentes</CardTitle>
-                <CardDescription>
-                  {loading ? "Carregando chamados..." : "Visualize os últimos chamados criados - Clique com o botão direito para editar ou excluir"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <div className="text-center py-8">Carregando...</div>
-                ) : tickets.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhum chamado encontrado. Crie seu primeiro chamado!
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {tickets.map((ticket) => (
-                      <ContextMenu key={ticket.id}>
-                        <ContextMenuTrigger>
-                          <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
-                            <div className="flex-1">
-                              <h3 className="font-medium text-gray-900">{ticket.titulo}</h3>
-                              <p className="text-sm text-gray-500">
-                                Criado em {new Date(ticket.created_at).toLocaleDateString('pt-BR')}
-                              </p>
-                              {ticket.numero_processo && (
-                                <p className="text-sm text-gray-600">Processo: {ticket.numero_processo}</p>
-                              )}
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              {ticket.prioridade && (
-                                <Badge variant={
-                                  ticket.prioridade === "critica" ? "destructive" : 
-                                  ticket.prioridade === "alta" ? "destructive" : 
-                                  ticket.prioridade === "media" ? "default" : "secondary"
-                                }>
-                                  {ticket.prioridade}
-                                </Badge>
-                              )}
-                              {ticket.tipo && (
-                                <Badge variant="outline">{ticket.tipo}</Badge>
-                              )}
-                              <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
-                                {ticket.status}
-                              </Badge>
-                            </div>
-                          </div>
-                        </ContextMenuTrigger>
-                        <ContextMenuContent>
-                          <ContextMenuItem onClick={() => handleEditTicket(ticket)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar Chamado
-                          </ContextMenuItem>
-                          <ContextMenuItem 
-                            onClick={() => handleDeleteTicket(ticket.id)}
-                            className="text-red-600 focus:text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir Chamado
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <RecentTickets 
+              tickets={tickets}
+              loading={loading}
+              onEditTicket={handleEditTicket}
+              onDeleteTicket={handleDeleteTicket}
+            />
           </div>
         );
     }
