@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { useToast } from './ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ResponseTemplates from './ResponseTemplates';
+import JiraTemplateModal from './JiraTemplateModal';
 
 // Lista de títulos padronizados dos chamados
 const titulosPadronizados = [
@@ -193,13 +194,11 @@ const primeiroGrauOJs = [
   { codigo: "0023", nome: "1ª Vara do Trabalho de Jacareí" },
   { codigo: "0415", nome: "LIQ2 - Bauru" },
   { codigo: "0607", nome: "Órgão Centralizador de Leilões Judiciais de Limeira" },
-  // ... keep existing code (todos os outros OJs do 1º grau)
 ];
 
 const segundoGrauOJs = [
   { codigo: "0800", nome: "Assessoria de Precatórios" },
   { codigo: "0381", nome: "Gabinete da Desembargadora Larissa Carotta Martins da Silva Scarabelim - 8ª Câmara" },
-  // ... keep existing code (todos os outros OJs do 2º grau)
 ];
 
 interface CreateTicketFormProps {
@@ -209,6 +208,7 @@ interface CreateTicketFormProps {
 
 const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, editingTicket }) => {
   const { toast } = useToast();
+  const [showJiraModal, setShowJiraModal] = useState(false);
   const [formData, setFormData] = useState({
     chamadoOrigem: '',
     numeroProcesso: '',
@@ -350,23 +350,28 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           title: "Sucesso!",
           description: "Chamado criado e salvo no banco de dados"
         });
+
+        // Abrir modal do template JIRA
+        setShowJiraModal(true);
       }
       
-      // Reset form
-      setFormData({
-        chamadoOrigem: '',
-        numeroProcesso: '',
-        grau: '',
-        orgaoJulgador: '',
-        ojDetectada: '',
-        titulo: '',
-        descricao: '',
-        prioridade: '',
-        tipo: ''
-      });
+      // Reset form only if not editing or if successfully created
+      if (!editingTicket) {
+        setFormData({
+          chamadoOrigem: '',
+          numeroProcesso: '',
+          grau: '',
+          orgaoJulgador: '',
+          ojDetectada: '',
+          titulo: '',
+          descricao: '',
+          prioridade: '',
+          tipo: ''
+        });
+      }
 
-      // Call the callback function if provided
-      if (onTicketCreated) {
+      // Call the callback function if provided and not showing modal
+      if (onTicketCreated && !showJiraModal) {
         onTicketCreated();
       }
     } catch (error) {
@@ -381,6 +386,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
 
   const ojOptions = formData.grau === '1' ? primeiroGrauOJs : 
                    formData.grau === '2' ? segundoGrauOJs : [];
+
+  const handleJiraModalClose = () => {
+    setShowJiraModal(false);
+    if (onTicketCreated) {
+      onTicketCreated();
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -518,6 +530,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       </Card>
 
       <ResponseTemplates />
+
+      {/* Modal do Template JIRA */}
+      <JiraTemplateModal
+        isOpen={showJiraModal}
+        onClose={handleJiraModalClose}
+        ticketData={formData}
+      />
     </div>
   );
 };
