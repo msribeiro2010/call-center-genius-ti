@@ -22,6 +22,17 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { toast } = useToast();
   const { ojData, detectarOJ, clearOJData } = useOJDetection();
   const [showJiraModal, setShowJiraModal] = useState(false);
+  const [jiraTemplateData, setJiraTemplateData] = useState({
+    chamadoOrigem: '',
+    numeroProcesso: '',
+    grau: '',
+    orgaoJulgador: '',
+    ojDetectada: '',
+    titulo: '',
+    descricao: '',
+    prioridade: '',
+    tipo: ''
+  });
   const [formData, setFormData] = useState({
     chamadoOrigem: '',
     numeroProcesso: '',
@@ -150,6 +161,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           description: "Chamado criado e salvo no banco de dados"
         });
 
+        // Configurar dados para o template JIRA com os dados atuais do formulário
+        setJiraTemplateData({
+          chamadoOrigem: formData.chamadoOrigem,
+          numeroProcesso: formData.numeroProcesso,
+          grau: formData.grau,
+          orgaoJulgador: formData.orgaoJulgador,
+          ojDetectada: formData.ojDetectada,
+          titulo: formData.titulo,
+          descricao: formData.descricao,
+          prioridade: formData.prioridade,
+          tipo: formData.tipo
+        });
+
         // Abrir modal do template JIRA apenas para novos chamados
         setShowJiraModal(true);
 
@@ -182,6 +206,18 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
 
   const handleJiraModalClose = () => {
     setShowJiraModal(false);
+    // Limpar dados do template quando fechar o modal
+    setJiraTemplateData({
+      chamadoOrigem: '',
+      numeroProcesso: '',
+      grau: '',
+      orgaoJulgador: '',
+      ojDetectada: '',
+      titulo: '',
+      descricao: '',
+      prioridade: '',
+      tipo: ''
+    });
     if (onTicketCreated) {
       onTicketCreated();
     }
@@ -328,7 +364,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       <JiraTemplateModal
         isOpen={showJiraModal}
         onClose={handleJiraModalClose}
-        ticketData={formData}
+        ticketData={jiraTemplateData}
       />
     </div>
   );
