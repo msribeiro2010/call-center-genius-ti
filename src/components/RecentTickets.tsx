@@ -13,6 +13,11 @@ interface Ticket {
   prioridade?: string;
   tipo?: string;
   status?: string;
+  chamado_origem?: string;
+  grau?: string;
+  orgao_julgador?: string;
+  oj_detectada?: string;
+  descricao?: string;
 }
 
 interface RecentTicketsProps {

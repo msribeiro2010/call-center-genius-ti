@@ -106,6 +106,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           title: "Sucesso!",
           description: "Chamado atualizado com sucesso"
         });
+
+        if (onTicketCreated) {
+          onTicketCreated();
+        }
       } else {
         // Criar novo chamado
         const { error } = await supabase
@@ -129,12 +133,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           description: "Chamado criado e salvo no banco de dados"
         });
 
-        // Abrir modal do template JIRA
+        // Abrir modal do template JIRA apenas para novos chamados
         setShowJiraModal(true);
-      }
-      
-      // Reset form only if not editing or if successfully created
-      if (!editingTicket) {
+
+        // Reset form apenas para novos chamados
         setFormData({
           chamadoOrigem: '',
           numeroProcesso: '',
@@ -147,11 +149,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           tipo: ''
         });
         clearOJData();
-      }
-
-      // Call the callback function if provided and not showing modal
-      if (onTicketCreated && !showJiraModal) {
-        onTicketCreated();
       }
     } catch (error) {
       console.error('Erro ao salvar chamado:', error);
@@ -177,7 +174,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>Criar Novo Chamado</CardTitle>
+          <CardTitle>{editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado'}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

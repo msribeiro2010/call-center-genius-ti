@@ -52,6 +52,7 @@ const Index = () => {
   };
 
   const handleEditTicket = (ticket) => {
+    console.log('Editando ticket:', ticket);
     setEditingTicket(ticket);
     setActiveTab("create");
   };
