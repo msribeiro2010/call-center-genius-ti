@@ -34,37 +34,54 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     tipo: ''
   });
 
+  // Carregar dados do ticket para edição
   useEffect(() => {
     if (editingTicket) {
+      console.log('Carregando dados para edição:', editingTicket);
       setFormData({
-        chamadoOrigem: editingTicket.chamado_origem || editingTicket.chamadoOrigem || '',
-        numeroProcesso: editingTicket.numero_processo || editingTicket.numeroProcesso || '',
+        chamadoOrigem: editingTicket.chamado_origem || '',
+        numeroProcesso: editingTicket.numero_processo || '',
         grau: editingTicket.grau || '',
-        orgaoJulgador: editingTicket.orgao_julgador || editingTicket.orgaoJulgador || '',
-        ojDetectada: editingTicket.oj_detectada || editingTicket.ojDetectada || '',
-        titulo: editingTicket.titulo || editingTicket.title || '',
+        orgaoJulgador: editingTicket.orgao_julgador || '',
+        ojDetectada: editingTicket.oj_detectada || '',
+        titulo: editingTicket.titulo || '',
         descricao: editingTicket.descricao || '',
-        prioridade: editingTicket.prioridade || editingTicket.priority || '',
-        tipo: editingTicket.tipo || editingTicket.type || ''
+        prioridade: editingTicket.prioridade || '',
+        tipo: editingTicket.tipo || ''
+      });
+    } else {
+      // Limpar formulário quando não está editando
+      setFormData({
+        chamadoOrigem: '',
+        numeroProcesso: '',
+        grau: '',
+        orgaoJulgador: '',
+        ojDetectada: '',
+        titulo: '',
+        descricao: '',
+        prioridade: '',
+        tipo: ''
       });
     }
   }, [editingTicket]);
 
   // Sync with OJ detection hook
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      grau: ojData.grau,
-      orgaoJulgador: ojData.orgaoJulgador,
-      ojDetectada: ojData.ojDetectada
-    }));
-  }, [ojData]);
+    if (!editingTicket) {
+      setFormData(prev => ({
+        ...prev,
+        grau: ojData.grau,
+        orgaoJulgador: ojData.orgaoJulgador,
+        ojDetectada: ojData.ojDetectada
+      }));
+    }
+  }, [ojData, editingTicket]);
 
   const handleProcessoChange = (value: string) => {
     setFormData(prev => ({ ...prev, numeroProcesso: value }));
-    if (value.trim()) {
+    if (value.trim() && !editingTicket) {
       detectarOJ(value);
-    } else {
+    } else if (!value.trim()) {
       clearOJData();
     }
   };
