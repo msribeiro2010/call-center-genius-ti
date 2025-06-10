@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Search, ThumbsUp, Eye } from 'lucide-react';
+import { Textarea } from './ui/textarea';
+import { Label } from './ui/label';
+import { Search, ThumbsUp, Eye, Plus, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 
@@ -27,6 +29,14 @@ const KnowledgeBase = () => {
   const [filteredItems, setFilteredItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [formData, setFormData] = useState({
+    titulo: '',
+    problema_descricao: '',
+    solucao: '',
+    categoria: '',
+    tags: ''
+  });
 
   useEffect(() => {
     loadKnowledgeBase();
@@ -114,6 +124,62 @@ const KnowledgeBase = () => {
     }
   };
 
+  const handleCreateKnowledge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.titulo || !formData.problema_descricao || !formData.solucao) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const tagsArray = formData.tags 
+        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
+        : [];
+
+      const { error } = await supabase
+        .from('base_conhecimento')
+        .insert({
+          titulo: formData.titulo,
+          problema_descricao: formData.problema_descricao,
+          solucao: formData.solucao,
+          categoria: formData.categoria || 'Geral',
+          tags: tagsArray
+        });
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso!",
+        description: "Conhecimento criado com sucesso"
+      });
+
+      // Reset form
+      setFormData({
+        titulo: '',
+        problema_descricao: '',
+        solucao: '',
+        categoria: '',
+        tags: ''
+      });
+      setShowCreateForm(false);
+      
+      // Recarregar lista
+      loadKnowledgeBase();
+    } catch (error) {
+      console.error('Erro ao criar conhecimento:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao criar conhecimento",
+        variant: "destructive"
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -126,10 +192,19 @@ const KnowledgeBase = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Base de Conhecimento
-          </CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Base de Conhecimento
+            </CardTitle>
+            <Button 
+              onClick={() => setShowCreateForm(true)}
+              className="flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Novo Conhecimento
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="relative mb-6">
@@ -194,6 +269,95 @@ const KnowledgeBase = () => {
         </CardContent>
       </Card>
 
+      {/* Modal para criar novo conhecimento */}
+      {showCreateForm && (
+        <Card className="fixed inset-4 z-50 bg-white shadow-2xl max-w-2xl mx-auto my-auto max-h-[80vh] overflow-auto">
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <CardTitle>Criar Novo Conhecimento</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowCreateForm(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleCreateKnowledge} className="space-y-4">
+              <div>
+                <Label htmlFor="titulo">Título *</Label>
+                <Input
+                  id="titulo"
+                  value={formData.titulo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
+                  placeholder="Digite o título do conhecimento"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="categoria">Categoria</Label>
+                <Input
+                  id="categoria"
+                  value={formData.categoria}
+                  onChange={(e) => setFormData(prev => ({ ...prev, categoria: e.target.value }))}
+                  placeholder="Ex: Sistema, Processo, Audiência"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="problema_descricao">Descrição do Problema *</Label>
+                <Textarea
+                  id="problema_descricao"
+                  value={formData.problema_descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, problema_descricao: e.target.value }))}
+                  placeholder="Descreva o problema ou situação"
+                  rows={3}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="solucao">Solução *</Label>
+                <Textarea
+                  id="solucao"
+                  value={formData.solucao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, solucao: e.target.value }))}
+                  placeholder="Descreva a solução detalhadamente"
+                  rows={4}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="tags">Tags</Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tags: e.target.value }))}
+                  placeholder="Separe as tags por vírgula (ex: pje, erro, assinatura)"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button type="submit" className="flex-1">
+                  Criar Conhecimento
+                </Button>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setShowCreateForm(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Modal para exibir solução */}
       {selectedItem && (
         <Card className="fixed inset-4 z-50 bg-white shadow-2xl max-w-2xl mx-auto my-auto max-h-[80vh] overflow-auto">
@@ -208,7 +372,7 @@ const KnowledgeBase = () => {
                 size="sm"
                 onClick={() => setSelectedItem(null)}
               >
-                ✕
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
@@ -261,11 +425,14 @@ const KnowledgeBase = () => {
         </Card>
       )}
       
-      {/* Overlay para o modal */}
-      {selectedItem && (
+      {/* Overlay para os modais */}
+      {(selectedItem || showCreateForm) && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40"
-          onClick={() => setSelectedItem(null)}
+          onClick={() => {
+            setSelectedItem(null);
+            setShowCreateForm(false);
+          }}
         />
       )}
     </div>
