@@ -51,13 +51,16 @@ export type Database = {
       chamados: {
         Row: {
           chamado_origem: string | null
+          cpf_usuario_afetado: string | null
           created_at: string
           descricao: string
           grau: string | null
           id: string
+          nome_usuario_afetado: string | null
           numero_processo: string | null
           oj_detectada: string | null
           orgao_julgador: string | null
+          perfil_usuario_afetado: string | null
           prioridade: string | null
           status: string | null
           tipo: string | null
@@ -66,13 +69,16 @@ export type Database = {
         }
         Insert: {
           chamado_origem?: string | null
+          cpf_usuario_afetado?: string | null
           created_at?: string
           descricao: string
           grau?: string | null
           id?: string
+          nome_usuario_afetado?: string | null
           numero_processo?: string | null
           oj_detectada?: string | null
           orgao_julgador?: string | null
+          perfil_usuario_afetado?: string | null
           prioridade?: string | null
           status?: string | null
           tipo?: string | null
@@ -81,13 +87,16 @@ export type Database = {
         }
         Update: {
           chamado_origem?: string | null
+          cpf_usuario_afetado?: string | null
           created_at?: string
           descricao?: string
           grau?: string | null
           id?: string
+          nome_usuario_afetado?: string | null
           numero_processo?: string | null
           oj_detectada?: string | null
           orgao_julgador?: string | null
+          perfil_usuario_afetado?: string | null
           prioridade?: string | null
           status?: string | null
           tipo?: string | null
