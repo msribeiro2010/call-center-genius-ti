@@ -19,6 +19,9 @@ interface JiraTemplateModalProps {
     descricao: string;
     prioridade: string;
     tipo: string;
+    nomeUsuarioAfetado: string;
+    cpfUsuarioAfetado: string;
+    perfilUsuarioAfetado: string;
   };
 }
 
@@ -53,6 +56,13 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     return typeMap[tipo] || 'Incident';
   };
 
+  const formatUsuarioAfetado = () => {
+    if (ticketData.perfilUsuarioAfetado && ticketData.cpfUsuarioAfetado && ticketData.nomeUsuarioAfetado) {
+      return `${ticketData.perfilUsuarioAfetado}/${ticketData.cpfUsuarioAfetado}/${ticketData.nomeUsuarioAfetado}`;
+    }
+    return 'N/A';
+  };
+
   const generateFullTemplate = () => {
     return `RESUMO: ${ticketData.titulo}
 
@@ -62,6 +72,8 @@ PRIORIDADE: ${formatPriority(ticketData.prioridade)}
 
 DESCRIÇÃO:
 ${ticketData.descricao}
+
+USUÁRIO AFETADO: ${formatUsuarioAfetado()}
 
 INFORMAÇÕES ADICIONAIS:
 - Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
@@ -149,6 +161,41 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
                 label="DESCRIÇÃO (Description)" 
                 value={ticketData.descricao}
                 className="border-l-4 border-green-500"
+              />
+
+              <CopyField 
+                label="USUÁRIO AFETADO" 
+                value={formatUsuarioAfetado()}
+                className="border-l-4 border-red-500"
+              />
+            </CardContent>
+          </Card>
+
+          {/* Informações do Usuário Afetado */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg text-blue-700">Dados do Usuário Afetado</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <CopyField 
+                  label="Nome Completo" 
+                  value={ticketData.nomeUsuarioAfetado} 
+                />
+                <CopyField 
+                  label="CPF" 
+                  value={ticketData.cpfUsuarioAfetado} 
+                />
+                <CopyField 
+                  label="Perfil" 
+                  value={ticketData.perfilUsuarioAfetado} 
+                />
+              </div>
+
+              <CopyField 
+                label="Formato JIRA (Perfil/CPF/Nome)" 
+                value={formatUsuarioAfetado()}
+                className="border-l-4 border-purple-500"
               />
             </CardContent>
           </Card>

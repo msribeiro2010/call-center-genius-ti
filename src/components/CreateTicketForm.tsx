@@ -31,7 +31,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     titulo: '',
     descricao: '',
     prioridade: '',
-    tipo: ''
+    tipo: '',
+    nomeUsuarioAfetado: '',
+    cpfUsuarioAfetado: '',
+    perfilUsuarioAfetado: ''
   });
   const [formData, setFormData] = useState({
     chamadoOrigem: '',
@@ -42,7 +45,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     titulo: '',
     descricao: '',
     prioridade: '',
-    tipo: ''
+    tipo: '',
+    nomeUsuarioAfetado: '',
+    cpfUsuarioAfetado: '',
+    perfilUsuarioAfetado: ''
   });
 
   // Carregar dados do ticket para edição
@@ -58,7 +64,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         titulo: editingTicket.titulo || '',
         descricao: editingTicket.descricao || '',
         prioridade: editingTicket.prioridade || '',
-        tipo: editingTicket.tipo || ''
+        tipo: editingTicket.tipo || '',
+        nomeUsuarioAfetado: editingTicket.nome_usuario_afetado || '',
+        cpfUsuarioAfetado: editingTicket.cpf_usuario_afetado || '',
+        perfilUsuarioAfetado: editingTicket.perfil_usuario_afetado || ''
       });
     } else {
       // Limpar formulário quando não está editando
@@ -71,7 +80,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         titulo: '',
         descricao: '',
         prioridade: '',
-        tipo: ''
+        tipo: '',
+        nomeUsuarioAfetado: '',
+        cpfUsuarioAfetado: '',
+        perfilUsuarioAfetado: ''
       });
     }
   }, [editingTicket]);
@@ -124,6 +136,9 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             descricao: formData.descricao,
             prioridade: formData.prioridade,
             tipo: formData.tipo,
+            nome_usuario_afetado: formData.nomeUsuarioAfetado,
+            cpf_usuario_afetado: formData.cpfUsuarioAfetado,
+            perfil_usuario_afetado: formData.perfilUsuarioAfetado,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingTicket.id);
@@ -151,7 +166,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             titulo: formData.titulo,
             descricao: formData.descricao,
             prioridade: formData.prioridade,
-            tipo: formData.tipo
+            tipo: formData.tipo,
+            nome_usuario_afetado: formData.nomeUsuarioAfetado,
+            cpf_usuario_afetado: formData.cpfUsuarioAfetado,
+            perfil_usuario_afetado: formData.perfilUsuarioAfetado
           });
 
         if (error) throw error;
@@ -171,7 +189,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           titulo: formData.titulo,
           descricao: formData.descricao,
           prioridade: formData.prioridade,
-          tipo: formData.tipo
+          tipo: formData.tipo,
+          nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
+          cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
+          perfilUsuarioAfetado: formData.perfilUsuarioAfetado
         });
 
         // Abrir modal do template JIRA apenas para novos chamados
@@ -187,7 +208,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           titulo: '',
           descricao: '',
           prioridade: '',
-          tipo: ''
+          tipo: '',
+          nomeUsuarioAfetado: '',
+          cpfUsuarioAfetado: '',
+          perfilUsuarioAfetado: ''
         });
         clearOJData();
       }
@@ -216,7 +240,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       titulo: '',
       descricao: '',
       prioridade: '',
-      tipo: ''
+      tipo: '',
+      nomeUsuarioAfetado: '',
+      cpfUsuarioAfetado: '',
+      perfilUsuarioAfetado: ''
     });
     if (onTicketCreated) {
       onTicketCreated();
@@ -250,6 +277,53 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   onChange={(e) => handleProcessoChange(e.target.value)}
                   placeholder="Ex: 0010750-13.2024.5.15.0023"
                 />
+              </div>
+            </div>
+
+            {/* Seção do Usuário Afetado */}
+            <div className="border-t pt-4">
+              <h3 className="text-lg font-semibold mb-4">Usuário Afetado</h3>
+              
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="nomeUsuarioAfetado">Nome Completo *</Label>
+                  <Input
+                    id="nomeUsuarioAfetado"
+                    value={formData.nomeUsuarioAfetado}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nomeUsuarioAfetado: e.target.value }))}
+                    placeholder="Nome completo do usuário"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cpfUsuarioAfetado">CPF *</Label>
+                  <Input
+                    id="cpfUsuarioAfetado"
+                    value={formData.cpfUsuarioAfetado}
+                    onChange={(e) => setFormData(prev => ({ ...prev, cpfUsuarioAfetado: e.target.value }))}
+                    placeholder="000.000.000-00"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="perfilUsuarioAfetado">Perfil *</Label>
+                  <Select value={formData.perfilUsuarioAfetado} onValueChange={(value) => setFormData(prev => ({ ...prev, perfilUsuarioAfetado: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o perfil" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Diretor">Diretor</SelectItem>
+                      <SelectItem value="Servidor">Servidor</SelectItem>
+                      <SelectItem value="Magistrado">Magistrado</SelectItem>
+                      <SelectItem value="Oficial">Oficial</SelectItem>
+                      <SelectItem value="Perito">Perito</SelectItem>
+                      <SelectItem value="Procurador">Procurador</SelectItem>
+                      <SelectItem value="Estagiário">Estagiário</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
 
