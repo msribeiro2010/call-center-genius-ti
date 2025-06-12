@@ -12,7 +12,7 @@ interface Ticket {
   titulo: string;
   created_at: string;
   numero_processo?: string;
-  prioridade?: string;
+  prioridade?: number;
   tipo?: string;
   status?: string;
   chamado_origem?: string;
@@ -41,17 +41,37 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  const getPriorityVariant = (prioridade: string) => {
+  const getPriorityVariant = (prioridade: number) => {
     switch (prioridade) {
-      case "critica":
-      case "alta":
-        return "destructive";
-      case "media":
-        return "default";
-      case "baixa":
-        return "secondary";
+      case 5:
+        return "destructive"; // Crítica
+      case 4:
+        return "destructive"; // Alta
+      case 3:
+        return "default"; // Média
+      case 2:
+        return "secondary"; // Baixa
+      case 1:
+        return "secondary"; // Muito baixa
       default:
         return "default";
+    }
+  };
+
+  const getPriorityLabel = (prioridade: number) => {
+    switch (prioridade) {
+      case 5:
+        return "Crítica";
+      case 4:
+        return "Alta";
+      case 3:
+        return "Média";
+      case 2:
+        return "Baixa";
+      case 1:
+        return "Muito baixa";
+      default:
+        return "Não definida";
     }
   };
 
@@ -94,7 +114,7 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                       <div className="flex items-center space-x-2">
                         {ticket.prioridade && (
                           <Badge variant={getPriorityVariant(ticket.prioridade)}>
-                            {ticket.prioridade}
+                            {getPriorityLabel(ticket.prioridade)}
                           </Badge>
                         )}
                         {ticket.tipo && (
@@ -176,7 +196,7 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                       <div className="flex justify-between">
                         <span className="font-medium">Prioridade:</span>
                         <Badge variant={getPriorityVariant(selectedTicket.prioridade)}>
-                          {selectedTicket.prioridade}
+                          {getPriorityLabel(selectedTicket.prioridade)}
                         </Badge>
                       </div>
                     )}

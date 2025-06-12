@@ -61,7 +61,7 @@ export type Database = {
           oj_detectada: string | null
           orgao_julgador: string | null
           perfil_usuario_afetado: string | null
-          prioridade: string | null
+          prioridade: number | null
           status: string | null
           tipo: string | null
           titulo: string
@@ -79,7 +79,7 @@ export type Database = {
           oj_detectada?: string | null
           orgao_julgador?: string | null
           perfil_usuario_afetado?: string | null
-          prioridade?: string | null
+          prioridade?: number | null
           status?: string | null
           tipo?: string | null
           titulo: string
@@ -97,7 +97,7 @@ export type Database = {
           oj_detectada?: string | null
           orgao_julgador?: string | null
           perfil_usuario_afetado?: string | null
-          prioridade?: string | null
+          prioridade?: number | null
           status?: string | null
           tipo?: string | null
           titulo?: string
