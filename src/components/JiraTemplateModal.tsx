@@ -17,7 +17,7 @@ interface JiraTemplateModalProps {
     ojDetectada: string;
     titulo: string;
     descricao: string;
-    prioridade: string;
+    prioridade: number;
     tipo: string;
     nomeUsuarioAfetado: string;
     cpfUsuarioAfetado: string;
@@ -36,12 +36,13 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     });
   };
 
-  const formatPriority = (prioridade: string) => {
-    const priorityMap: { [key: string]: string } = {
-      'baixa': 'Low',
-      'media': 'Medium', 
-      'alta': 'High',
-      'critica': 'Critical'
+  const formatPriority = (prioridade: number) => {
+    const priorityMap: { [key: number]: string } = {
+      1: 'Lowest',
+      2: 'Low', 
+      3: 'Medium',
+      4: 'High',
+      5: 'Highest'
     };
     return priorityMap[prioridade] || 'Medium';
   };

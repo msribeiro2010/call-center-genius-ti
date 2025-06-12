@@ -30,7 +30,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     ojDetectada: '',
     titulo: '',
     descricao: '',
-    prioridade: '',
+    prioridade: 3,
     tipo: '',
     nomeUsuarioAfetado: '',
     cpfUsuarioAfetado: '',
@@ -44,7 +44,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     ojDetectada: '',
     titulo: '',
     descricao: '',
-    prioridade: '',
+    prioridade: 3,
     tipo: '',
     nomeUsuarioAfetado: '',
     cpfUsuarioAfetado: '',
@@ -63,7 +63,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         ojDetectada: editingTicket.oj_detectada || '',
         titulo: editingTicket.titulo || '',
         descricao: editingTicket.descricao || '',
-        prioridade: editingTicket.prioridade || '',
+        prioridade: editingTicket.prioridade || 3,
         tipo: editingTicket.tipo || '',
         nomeUsuarioAfetado: editingTicket.nome_usuario_afetado || '',
         cpfUsuarioAfetado: editingTicket.cpf_usuario_afetado || '',
@@ -79,7 +79,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         ojDetectada: '',
         titulo: '',
         descricao: '',
-        prioridade: '',
+        prioridade: 3,
         tipo: '',
         nomeUsuarioAfetado: '',
         cpfUsuarioAfetado: '',
@@ -207,7 +207,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           ojDetectada: '',
           titulo: '',
           descricao: '',
-          prioridade: '',
+          prioridade: 3,
           tipo: '',
           nomeUsuarioAfetado: '',
           cpfUsuarioAfetado: '',
@@ -239,7 +239,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       ojDetectada: '',
       titulo: '',
       descricao: '',
-      prioridade: '',
+      prioridade: 3,
       tipo: '',
       nomeUsuarioAfetado: '',
       cpfUsuarioAfetado: '',
@@ -383,15 +383,16 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
 
               <div>
                 <Label htmlFor="prioridade">Prioridade</Label>
-                <Select value={formData.prioridade} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}>
+                <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a prioridade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="critica">Crítica</SelectItem>
+                    <SelectItem value="1">1 - Muito Baixa</SelectItem>
+                    <SelectItem value="2">2 - Baixa</SelectItem>
+                    <SelectItem value="3">3 - Média</SelectItem>
+                    <SelectItem value="4">4 - Alta</SelectItem>
+                    <SelectItem value="5">5 - Crítica</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
