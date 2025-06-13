@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -12,6 +11,7 @@ import ResponseTemplates from './ResponseTemplates';
 import JiraTemplateModal from './JiraTemplateModal';
 import { useOJDetection } from '@/hooks/useOJDetection';
 import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
+import DescriptionImprover from './DescriptionImprover';
 
 interface CreateTicketFormProps {
   onTicketCreated?: () => void;
@@ -250,6 +250,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
+  const handleImprovedDescription = (improvedText: string) => {
+    setFormData(prev => ({ ...prev, descricao: improvedText }));
+  };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -399,23 +403,14 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             </div>
 
             <div>
-              <Label htmlFor="titulo">Título do Chamado *</Label>
-              <Select value={formData.titulo} onValueChange={(value) => setFormData(prev => ({ ...prev, titulo: value }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o título do chamado" />
-                </SelectTrigger>
-                <SelectContent className="max-h-60 overflow-y-auto">
-                  {titulosPadronizados.map((titulo, index) => (
-                    <SelectItem key={index} value={titulo}>
-                      {titulo}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="descricao">Descrição Detalhada *</Label>
+              <div className="flex items-center justify-between mb-2">
+                <Label htmlFor="descricao">Descrição Detalhada *</Label>
+                <DescriptionImprover
+                  currentDescription={formData.descricao}
+                  onImprovedDescription={handleImprovedDescription}
+                  context={`${formData.titulo} - ${formData.tipo}`}
+                />
+              </div>
               <Textarea
                 id="descricao"
                 value={formData.descricao}
