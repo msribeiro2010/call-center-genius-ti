@@ -11,6 +11,7 @@ import ResponseTemplates from './ResponseTemplates';
 import JiraTemplateModal from './JiraTemplateModal';
 import { useOJDetection } from '@/hooks/useOJDetection';
 import { useAssuntos } from '@/hooks/useAssuntos';
+import { useCPFValidation } from '@/hooks/useCPFValidation';
 import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
 import DescriptionImprover from './DescriptionImprover';
 import SearchableAssuntoSelect from './SearchableAssuntoSelect';
@@ -24,6 +25,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { toast } = useToast();
   const { ojData, detectarOJ, clearOJData } = useOJDetection();
   const { assuntos, loading: assuntosLoading } = useAssuntos();
+  const { cpfError, validateCPF, formatCPF, setCpfError } = useCPFValidation();
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
     chamadoOrigem: '',
@@ -116,6 +118,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
+  const handleCPFChange = (value: string) => {
+    // Formatar CPF enquanto digita
+    const formattedCPF = formatCPF(value);
+    setFormData(prev => ({ ...prev, cpfUsuarioAfetado: formattedCPF }));
+    
+    // Validar apenas se o campo estiver completo
+    if (formattedCPF.length === 14) {
+      validateCPF(formattedCPF);
+    } else {
+      setCpfError('');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -123,6 +138,16 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validar CPF antes de submeter
+    if (formData.cpfUsuarioAfetado && !validateCPF(formData.cpfUsuarioAfetado)) {
+      toast({
+        title: "Erro",
+        description: "CPF inválido",
         variant: "destructive"
       });
       return;
@@ -339,10 +364,15 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   <Input
                     id="cpfUsuarioAfetado"
                     value={formData.cpfUsuarioAfetado}
-                    onChange={(e) => setFormData(prev => ({ ...prev, cpfUsuarioAfetado: e.target.value }))}
+                    onChange={(e) => handleCPFChange(e.target.value)}
                     placeholder="000.000.000-00"
+                    maxLength={14}
+                    className={cpfError ? "border-red-500" : ""}
                     required
                   />
+                  {cpfError && (
+                    <p className="text-sm text-red-500 mt-1">{cpfError}</p>
+                  )}
                 </div>
 
                 <div>
