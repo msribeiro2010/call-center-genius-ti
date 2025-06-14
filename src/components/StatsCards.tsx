@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { FileText, Search, Database, BookOpen } from 'lucide-react';
+import { FileText, Search, Database, BookOpen, TrendingUp, Zap, Sparkles, Target } from 'lucide-react';
 
 interface StatsCardsProps {
   stats: {
@@ -13,47 +13,81 @@ interface StatsCardsProps {
 }
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
+  const statsConfig = [
+    {
+      title: "Total de Chamados",
+      value: stats.totalTickets,
+      icon: FileText,
+      gradient: "from-blue-500 to-cyan-500",
+      bgGradient: "from-blue-500/10 to-cyan-500/10",
+      shadowColor: "shadow-blue-500/20"
+    },
+    {
+      title: "Chamados Abertos",
+      value: stats.openTickets,
+      icon: Search,
+      gradient: "from-orange-500 to-red-500",
+      bgGradient: "from-orange-500/10 to-red-500/10",
+      shadowColor: "shadow-orange-500/20"
+    },
+    {
+      title: "Em Andamento",
+      value: stats.inProgress,
+      icon: TrendingUp,
+      gradient: "from-green-500 to-emerald-500",
+      bgGradient: "from-green-500/10 to-emerald-500/10",
+      shadowColor: "shadow-green-500/20"
+    },
+    {
+      title: "Base de Conhecimento",
+      value: stats.templates,
+      icon: Sparkles,
+      gradient: "from-purple-500 to-pink-500",
+      bgGradient: "from-purple-500/10 to-pink-500/10",
+      shadowColor: "shadow-purple-500/20"
+    }
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-blue-700">Total de Chamados</CardTitle>
-          <FileText className="h-4 w-4 text-blue-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-800">{stats.totalTickets}</div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-orange-700">Chamados Abertos</CardTitle>
-          <Search className="h-4 w-4 text-orange-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-orange-800">{stats.openTickets}</div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-green-700">Em Andamento</CardTitle>
-          <Database className="h-4 w-4 text-green-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-800">{stats.inProgress}</div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-purple-700">Base de Conhecimento</CardTitle>
-          <BookOpen className="h-4 w-4 text-purple-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-purple-800">{stats.templates}</div>
-        </CardContent>
-      </Card>
+      {statsConfig.map((stat, index) => {
+        const IconComponent = stat.icon;
+        return (
+          <Card 
+            key={index} 
+            className={`group relative backdrop-blur-md bg-gradient-to-br ${stat.bgGradient} border border-white/20 shadow-xl ${stat.shadowColor} hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:border-white/30 overflow-hidden`}
+          >
+            {/* Animated Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            
+            {/* Floating Particles */}
+            <div className="absolute top-4 right-4 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+            <div className="absolute bottom-6 left-6 w-1 h-1 bg-white/20 rounded-full animate-bounce"></div>
+            
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
+              <CardTitle className="text-sm font-medium text-white/90 group-hover:text-white transition-colors duration-300">
+                {stat.title}
+              </CardTitle>
+              <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                <IconComponent className="h-5 w-5 text-white" />
+              </div>
+            </CardHeader>
+            
+            <CardContent className="relative z-10">
+              <div className={`text-3xl font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent group-hover:scale-110 transition-transform duration-300 origin-left`}>
+                {stat.value}
+              </div>
+              <div className="flex items-center gap-1 mt-2">
+                <TrendingUp className="w-3 h-3 text-green-400" />
+                <span className="text-xs text-white/60">Atualizado</span>
+              </div>
+            </CardContent>
+            
+            {/* Bottom Glow */}
+            <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${stat.gradient} opacity-60 group-hover:opacity-100 transition-opacity duration-300`}></div>
+          </Card>
+        );
+      })}
     </div>
   );
 };

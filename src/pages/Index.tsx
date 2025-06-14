@@ -10,6 +10,7 @@ import KnowledgeBase from "@/components/KnowledgeBase";
 import StatsCards from "@/components/StatsCards";
 import QuickActions from "@/components/QuickActions";
 import RecentTickets from "@/components/RecentTickets";
+import { Sparkles, Zap } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -106,7 +107,7 @@ const Index = () => {
         return <KnowledgeBase />;
       default:
         return (
-          <div className="space-y-6">
+          <div className="space-y-8">
             <StatsCards stats={stats} />
             
             <QuickActions 
@@ -127,61 +128,86 @@ const Index = () => {
     }
   };
 
+  const navigationTabs = [
+    { id: "dashboard", label: "Dashboard", icon: Sparkles },
+    { id: "create", label: "Criar Chamado", icon: Zap },
+    { id: "knowledge", label: "Base de Conhecimento", icon: Sparkles },
+    { id: "templates", label: "Templates", icon: Zap },
+    { id: "history", label: "Histórico", icon: Sparkles },
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-4 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div className="absolute top-1/2 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-2000"></div>
+        <div className="absolute -bottom-8 left-1/2 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse animation-delay-4000"></div>
+      </div>
+
+      {/* Glass Header */}
+      <header className="relative backdrop-blur-md bg-white/5 border-b border-white/10 shadow-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">TI Support</h1>
-              <p className="text-gray-600">Sistema de Geração de Chamados JIRA</p>
+          <div className="flex flex-col lg:flex-row justify-between items-center py-8">
+            {/* Logo Section */}
+            <div className="text-center lg:text-left mb-6 lg:mb-0">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-2">
+                <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl shadow-lg">
+                  <Zap className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                    TI Support
+                  </h1>
+                  <p className="text-white/70 text-lg">Sistema Inteligente de Chamados JIRA</p>
+                </div>
+              </div>
             </div>
-            <div className="flex space-x-4">
-              <Button
-                onClick={() => setActiveTab("dashboard")}
-                variant={activeTab === "dashboard" ? "default" : "outline"}
-                className={activeTab === "dashboard" ? "bg-blue-600 text-white" : ""}
-              >
-                Dashboard
-              </Button>
-              <Button
-                onClick={() => setActiveTab("create")}
-                variant={activeTab === "create" ? "default" : "outline"}
-                className={activeTab === "create" ? "bg-blue-600 text-white" : ""}
-              >
-                Criar Chamado
-              </Button>
-              <Button
-                onClick={() => setActiveTab("knowledge")}
-                variant={activeTab === "knowledge" ? "default" : "outline"}
-                className={activeTab === "knowledge" ? "bg-blue-600 text-white" : ""}
-              >
-                Base de Conhecimento
-              </Button>
-              <Button
-                onClick={() => setActiveTab("templates")}
-                variant={activeTab === "templates" ? "default" : "outline"}
-                className={activeTab === "templates" ? "bg-blue-600 text-white" : ""}
-              >
-                Templates
-              </Button>
-              <Button
-                onClick={() => setActiveTab("history")}
-                variant={activeTab === "history" ? "default" : "outline"}
-                className={activeTab === "history" ? "bg-blue-600 text-white" : ""}
-              >
-                Histórico
-              </Button>
+
+            {/* Modern Navigation */}
+            <div className="flex flex-wrap justify-center lg:justify-end gap-2">
+              {navigationTabs.map((tab) => {
+                const IconComponent = tab.icon;
+                return (
+                  <Button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    variant="ghost"
+                    className={`group relative px-6 py-3 rounded-xl transition-all duration-300 ${
+                      activeTab === tab.id
+                        ? "bg-gradient-to-r from-blue-500/20 to-purple-500/20 backdrop-blur-sm border border-blue-400/30 text-white shadow-lg"
+                        : "hover:bg-white/10 backdrop-blur-sm text-white/80 hover:text-white border border-transparent hover:border-white/20"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <IconComponent className="w-4 h-4" />
+                      <span className="font-medium">{tab.label}</span>
+                    </div>
+                    {activeTab === tab.id && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 to-purple-600/10 rounded-xl animate-pulse"></div>
+                    )}
+                  </Button>
+                );
+              })}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {renderContent()}
+      {/* Main Content with Glass Effect */}
+      <main className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="backdrop-blur-md bg-white/5 rounded-3xl border border-white/10 shadow-2xl p-8">
+          {renderContent()}
+        </div>
       </main>
+
+      {/* Floating Elements */}
+      <div className="fixed bottom-8 right-8 pointer-events-none">
+        <div className="w-4 h-4 bg-blue-400 rounded-full animate-ping"></div>
+      </div>
+      <div className="fixed top-1/4 left-8 pointer-events-none">
+        <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"></div>
+      </div>
     </div>
   );
 };
