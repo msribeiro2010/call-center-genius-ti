@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -9,6 +8,7 @@ import KnowledgeItemCard from './KnowledgeItemCard';
 import KnowledgeCreateModal from './KnowledgeCreateModal';
 import KnowledgeSolutionModal from './KnowledgeSolutionModal';
 import KnowledgeSearchBar from './KnowledgeSearchBar';
+import KnowledgeBaseSeeder from './KnowledgeBaseSeeder';
 
 interface KnowledgeItem {
   id: string;
@@ -194,6 +194,11 @@ const KnowledgeBase = () => {
 
   return (
     <div className="space-y-6">
+      {/* Seeder Component - só aparece se não há itens */}
+      {knowledgeItems.length === 0 && (
+        <KnowledgeBaseSeeder />
+      )}
+
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
@@ -226,9 +231,9 @@ const KnowledgeBase = () => {
             ))}
           </div>
 
-          {filteredItems.length === 0 && (
+          {filteredItems.length === 0 && searchTerm && (
             <div className="text-center py-8 text-muted-foreground">
-              {searchTerm ? 'Nenhum resultado encontrado para sua busca.' : 'Nenhum item na base de conhecimento.'}
+              Nenhum resultado encontrado para sua busca.
             </div>
           )}
         </CardContent>
