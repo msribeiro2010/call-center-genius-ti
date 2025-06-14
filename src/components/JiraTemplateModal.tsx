@@ -69,7 +69,7 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
 
 TIPO DE ISSUE: ${formatType(ticketData.tipo)}
 
-PRIORIDADE: ${formatPriority(ticketData.prioridade)}
+PRIORIDADE: ${ticketData.prioridade}
 
 DESCRIÇÃO:
 ${ticketData.descricao}
@@ -154,7 +154,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
                 />
                 <CopyField 
                   label="PRIORIDADE (Priority)" 
-                  value={formatPriority(ticketData.prioridade)} 
+                  value={ticketData.prioridade.toString()} 
                 />
               </div>
 
