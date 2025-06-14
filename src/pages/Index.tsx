@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import CreateTicketForm from "@/components/CreateTicketForm";
@@ -8,9 +8,40 @@ import RecentTickets from "@/components/RecentTickets";
 import KnowledgeBase from "@/components/KnowledgeBase";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
+import { useTickets } from "@/hooks/useTickets";
+
+interface Ticket {
+  id: string;
+  titulo: string;
+  created_at: string;
+  numero_processo?: string;
+  prioridade?: number;
+  tipo?: string;
+  status?: string;
+  chamado_origem?: string;
+  grau?: string;
+  orgao_julgador?: string;
+  oj_detectada?: string;
+  descricao?: string;
+  nome_usuario_afetado?: string;
+  cpf_usuario_afetado?: string;
+  perfil_usuario_afetado?: string;
+}
 
 const Index = () => {
   const { user } = useAuth();
+  const { tickets, loading, stats, deleteTicket } = useTickets();
+  const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+
+  const handleEditTicket = (ticket: Ticket) => {
+    setEditingTicket(ticket);
+    // TODO: Implement edit modal
+    console.log('Editing ticket:', ticket);
+  };
+
+  const handleDeleteTicket = (ticketId: string) => {
+    deleteTicket(ticketId);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -34,7 +65,7 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <StatsCards />
+          <StatsCards stats={stats} />
           
           <Tabs defaultValue="tickets" className="mt-6">
             <TabsList className="grid w-full grid-cols-3">
@@ -46,7 +77,12 @@ const Index = () => {
             <TabsContent value="tickets" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <CreateTicketForm />
-                <RecentTickets />
+                <RecentTickets 
+                  tickets={tickets}
+                  loading={loading}
+                  onEditTicket={handleEditTicket}
+                  onDeleteTicket={handleDeleteTicket}
+                />
               </div>
             </TabsContent>
             
