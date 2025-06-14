@@ -23,7 +23,9 @@ interface Ticket {
 
 export const useTickets = () => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   const fetchTickets = async () => {
@@ -46,6 +48,7 @@ export const useTickets = () => {
       }
 
       setTickets(data || []);
+      setFilteredTickets(data || []);
     } catch (error) {
       console.error('Erro ao buscar chamados:', error);
       toast({
@@ -56,6 +59,23 @@ export const useTickets = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const searchTickets = (term: string) => {
+    setSearchTerm(term);
+    if (!term.trim()) {
+      setFilteredTickets(tickets);
+      return;
+    }
+
+    const filtered = tickets.filter(ticket => 
+      ticket.titulo.toLowerCase().includes(term.toLowerCase()) ||
+      ticket.chamado_origem?.toLowerCase().includes(term.toLowerCase()) ||
+      ticket.numero_processo?.toLowerCase().includes(term.toLowerCase()) ||
+      ticket.descricao?.toLowerCase().includes(term.toLowerCase()) ||
+      ticket.nome_usuario_afetado?.toLowerCase().includes(term.toLowerCase())
+    );
+    setFilteredTickets(filtered);
   };
 
   const deleteTicket = async (ticketId: string) => {
@@ -96,6 +116,10 @@ export const useTickets = () => {
     fetchTickets();
   }, []);
 
+  useEffect(() => {
+    searchTickets(searchTerm);
+  }, [tickets, searchTerm]);
+
   const stats = {
     totalTickets: tickets.length,
     openTickets: tickets.filter(t => t.status === 'Aberto').length,
@@ -104,9 +128,11 @@ export const useTickets = () => {
   };
 
   return {
-    tickets,
+    tickets: filteredTickets,
     loading,
     stats,
+    searchTerm,
+    setSearchTerm: searchTickets,
     fetchTickets,
     deleteTicket,
   };

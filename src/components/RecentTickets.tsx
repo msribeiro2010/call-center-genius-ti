@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import TicketCard from './TicketCard';
 import TicketDetailsModal from './TicketDetailsModal';
+import TicketSearchBar from './TicketSearchBar';
 
 interface Ticket {
   id: string;
@@ -25,6 +26,8 @@ interface Ticket {
 interface RecentTicketsProps {
   tickets: Ticket[];
   loading: boolean;
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
   onEditTicket: (ticket: Ticket) => void;
   onDeleteTicket: (ticketId: string) => void;
 }
@@ -32,6 +35,8 @@ interface RecentTicketsProps {
 const RecentTickets: React.FC<RecentTicketsProps> = ({ 
   tickets, 
   loading, 
+  searchTerm,
+  onSearchChange,
   onEditTicket, 
   onDeleteTicket 
 }) => {
@@ -53,11 +58,19 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!loading && (
+            <TicketSearchBar
+              searchTerm={searchTerm}
+              onSearchChange={onSearchChange}
+              placeholder="Buscar por título, chamado origem, processo, descrição..."
+            />
+          )}
+          
           {loading ? (
             <div className="text-center py-8">Carregando...</div>
           ) : tickets.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum chamado encontrado. Crie seu primeiro chamado!
+              {searchTerm ? "Nenhum chamado encontrado para a busca atual." : "Nenhum chamado encontrado. Crie seu primeiro chamado!"}
             </div>
           ) : (
             <div className="space-y-4">
