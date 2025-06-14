@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 interface Ticket {
   id: string;
@@ -28,6 +28,7 @@ export const useTickets = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [knowledgeBaseCount, setKnowledgeBaseCount] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const fetchTickets = async () => {
     try {

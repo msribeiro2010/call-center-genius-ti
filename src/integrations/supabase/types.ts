@@ -108,6 +108,7 @@ export type Database = {
           chamado_origem: string | null
           cpf_usuario_afetado: string | null
           created_at: string
+          created_by: string | null
           descricao: string
           grau: string | null
           id: string
@@ -127,6 +128,7 @@ export type Database = {
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
+          created_by?: string | null
           descricao: string
           grau?: string | null
           id?: string
@@ -146,6 +148,7 @@ export type Database = {
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
+          created_by?: string | null
           descricao?: string
           grau?: string | null
           id?: string

@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import StatsCards from "@/components/StatsCards";
 import RecentTickets from "@/components/RecentTickets";
 import KnowledgeBase from "@/components/KnowledgeBase";
+import Reports from "@/components/Reports";
 import UserMenu from "@/components/UserMenu";
 import { useAuth } from "@/hooks/useAuth";
 import { useTickets } from "@/hooks/useTickets";
@@ -93,19 +92,7 @@ const Index = () => {
             </TabsContent>
             
             <TabsContent value="reports">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Relatórios</CardTitle>
-                  <CardDescription>
-                    Visualize estatísticas e relatórios do sistema
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground">
-                    Funcionalidade de relatórios em desenvolvimento...
-                  </p>
-                </CardContent>
-              </Card>
+              <Reports />
             </TabsContent>
           </Tabs>
         </div>
