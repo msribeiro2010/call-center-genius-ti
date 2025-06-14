@@ -109,29 +109,34 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   }, [ojData, editingTicket]);
 
   const handleProcessoChange = (value: string) => {
+    console.log('Mudança no processo:', value);
     setFormData(prev => ({ ...prev, numeroProcesso: value }));
-    if (value.trim() && !editingTicket) {
-      // Passar o grau selecionado para a detecção
-      detectarOJ(value, formData.grau);
+    
+    // Só detectar OJ automaticamente se o grau for 1º grau
+    if (value.trim() && !editingTicket && formData.grau === '1') {
+      console.log('Detectando OJ para 1º grau');
+      detectarOJ(value, '1');
     } else if (!value.trim()) {
       clearOJData();
     }
   };
 
   const handleGrauChange = (value: string) => {
+    console.log('Mudança no grau:', value);
     setFormData(prev => ({ 
       ...prev, 
       grau: value, 
-      orgaoJulgador: '', // Limpa o órgão julgador ao mudar o grau
-      ojDetectada: '' // Limpa a OJ detectada ao mudar o grau
+      orgaoJulgador: '', 
+      ojDetectada: '' 
     }));
+    
+    // Limpar dados de OJ ao mudar o grau
+    clearOJData();
     
     // Se há um número de processo e o usuário escolheu 1º grau, detectar OJ automaticamente
     if (value === '1' && formData.numeroProcesso.trim()) {
-      detectarOJ(formData.numeroProcesso, value);
-    } else {
-      // Para 2º grau ou quando não há processo, limpar dados
-      clearOJData();
+      console.log('Detectando OJ automaticamente para 1º grau');
+      detectarOJ(formData.numeroProcesso, '1');
     }
   };
 
@@ -388,8 +393,11 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
 
               <div>
-                <Label htmlFor="grau">Grau</Label>
-                <Select value={formData.grau} onValueChange={handleGrauChange}>
+                <Label htmlFor="grau">Grau *</Label>
+                <Select 
+                  value={formData.grau} 
+                  onValueChange={handleGrauChange}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o grau" />
                   </SelectTrigger>
@@ -401,7 +409,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
               
               <div>
-                <Label htmlFor="numeroProcesso">Número do Processo *</Label>
+                <Label htmlFor="numeroProcesso">Número do Processo</Label>
                 <Input
                   id="numeroProcesso"
                   value={formData.numeroProcesso}
