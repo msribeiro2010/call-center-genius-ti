@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -50,7 +51,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     grau: '',
     orgaoJulgador: '',
     ojDetectada: '',
-    titulo: '',
     descricao: '',
     prioridade: 3,
     tipo: '',
@@ -70,7 +70,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         grau: editingTicket.grau || '',
         orgaoJulgador: editingTicket.orgao_julgador || '',
         ojDetectada: editingTicket.oj_detectada || '',
-        titulo: editingTicket.titulo || '',
         descricao: editingTicket.descricao || '',
         prioridade: editingTicket.prioridade || 3,
         tipo: editingTicket.tipo || '',
@@ -87,7 +86,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         grau: '',
         orgaoJulgador: '',
         ojDetectada: '',
-        titulo: '',
         descricao: '',
         prioridade: 3,
         tipo: '',
@@ -170,7 +168,11 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.titulo || !formData.descricao) {
+    // Buscar o nome do assunto selecionado para usar como título
+    const assuntoSelecionado = assuntos.find(a => a.id === formData.assuntoId);
+    const titulo = assuntoSelecionado ? assuntoSelecionado.nome : '';
+    
+    if (!formData.assuntoId || !formData.descricao) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -209,7 +211,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             grau: formData.grau,
             orgao_julgador: formData.orgaoJulgador,
             oj_detectada: formData.ojDetectada,
-            titulo: formData.titulo,
+            titulo: titulo,
             descricao: formData.descricao,
             prioridade: formData.prioridade,
             tipo: formData.tipo,
@@ -241,7 +243,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             grau: formData.grau,
             orgao_julgador: formData.orgaoJulgador,
             oj_detectada: formData.ojDetectada,
-            titulo: formData.titulo,
+            titulo: titulo,
             descricao: formData.descricao,
             prioridade: formData.prioridade,
             tipo: formData.tipo,
@@ -265,7 +267,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           grau: formData.grau,
           orgaoJulgador: formData.orgaoJulgador,
           ojDetectada: formData.ojDetectada,
-          titulo: formData.titulo,
+          titulo: titulo,
           descricao: formData.descricao,
           prioridade: formData.prioridade,
           tipo: formData.tipo,
@@ -285,7 +287,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           grau: '',
           orgaoJulgador: '',
           ojDetectada: '',
-          titulo: '',
           descricao: '',
           prioridade: 3,
           tipo: '',
@@ -520,23 +521,12 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             </div>
 
             <div>
-              <Label htmlFor="titulo">Título *</Label>
-              <Input
-                id="titulo"
-                value={formData.titulo}
-                onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
-                placeholder="Título do chamado"
-                required
-              />
-            </div>
-
-            <div>
               <div className="flex items-center justify-between mb-2">
                 <Label htmlFor="descricao">Descrição Detalhada *</Label>
                 <DescriptionImprover
                   currentDescription={formData.descricao}
                   onImprovedDescription={handleImprovedDescription}
-                  context={`${formData.titulo} - ${formData.tipo}`}
+                  context={`${formData.assuntoId} - ${formData.tipo}`}
                 />
               </div>
               <Textarea
