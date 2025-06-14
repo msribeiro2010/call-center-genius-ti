@@ -96,9 +96,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   }, [editingTicket]);
 
-  // Sync with OJ detection hook
+  // Sync with OJ detection hook apenas se o usuário não selecionou manualmente o grau
   useEffect(() => {
-    if (!editingTicket) {
+    if (!editingTicket && !formData.grau) {
+      // Só aplica a detecção automática se o usuário não escolheu um grau manualmente
       setFormData(prev => ({
         ...prev,
         grau: ojData.grau,
@@ -106,13 +107,28 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         ojDetectada: ojData.ojDetectada
       }));
     }
-  }, [ojData, editingTicket]);
+  }, [ojData, editingTicket, formData.grau]);
 
   const handleProcessoChange = (value: string) => {
     setFormData(prev => ({ ...prev, numeroProcesso: value }));
-    if (value.trim() && !editingTicket) {
+    if (value.trim() && !editingTicket && !formData.grau) {
+      // Só detecta automaticamente se o usuário não selecionou um grau manualmente
       detectarOJ(value);
     } else if (!value.trim()) {
+      clearOJData();
+    }
+  };
+
+  const handleGrauChange = (value: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      grau: value, 
+      orgaoJulgador: '', // Limpa o órgão julgador ao mudar o grau
+      ojDetectada: '' // Limpa a OJ detectada ao mudar o grau manualmente
+    }));
+    
+    // Se o usuário escolher um grau manualmente, limpa a detecção automática
+    if (value) {
       clearOJData();
     }
   };
@@ -358,7 +374,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="chamadoOrigem">Número do Chamado de Origem</Label>
                 <Input
@@ -367,6 +383,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   onChange={(e) => setFormData(prev => ({ ...prev, chamadoOrigem: e.target.value }))}
                   placeholder="Ex: HELP-12345"
                 />
+              </div>
+
+              <div>
+                <Label htmlFor="grau">Grau</Label>
+                <Select value={formData.grau} onValueChange={handleGrauChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o grau" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1º Grau</SelectItem>
+                    <SelectItem value="2">2º Grau</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               
               <div>
@@ -457,19 +486,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="grau">Grau</Label>
-                <Select value={formData.grau} onValueChange={(value) => setFormData(prev => ({ ...prev, grau: value, orgaoJulgador: '' }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o grau" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1º Grau</SelectItem>
-                    <SelectItem value="2">2º Grau</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
                 <Label htmlFor="orgaoJulgador">Órgão Julgador</Label>
                 <Select value={formData.orgaoJulgador} onValueChange={(value) => setFormData(prev => ({ ...prev, orgaoJulgador: value }))}>
                   <SelectTrigger>
@@ -484,9 +500,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="tipo">Tipo do Chamado</Label>
                 <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
@@ -501,22 +515,22 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div>
-                <Label htmlFor="prioridade">Prioridade</Label>
-                <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 - Muito Baixa</SelectItem>
-                    <SelectItem value="2">2 - Baixa</SelectItem>
-                    <SelectItem value="3">3 - Média</SelectItem>
-                    <SelectItem value="4">4 - Alta</SelectItem>
-                    <SelectItem value="5">5 - Crítica</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label htmlFor="prioridade">Prioridade</Label>
+              <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a prioridade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 - Muito Baixa</SelectItem>
+                  <SelectItem value="2">2 - Baixa</SelectItem>
+                  <SelectItem value="3">3 - Média</SelectItem>
+                  <SelectItem value="4">4 - Alta</SelectItem>
+                  <SelectItem value="5">5 - Crítica</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
