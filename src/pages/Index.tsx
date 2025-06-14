@@ -30,7 +30,7 @@ interface Ticket {
 
 const Index = () => {
   const { user } = useAuth();
-  const { tickets, loading, stats, deleteTicket } = useTickets();
+  const { tickets, loading, stats, searchTerm, setSearchTerm, deleteTicket } = useTickets();
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
 
   const handleEditTicket = (ticket: Ticket) => {
@@ -80,6 +80,8 @@ const Index = () => {
                 <RecentTickets 
                   tickets={tickets}
                   loading={loading}
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
                   onEditTicket={handleEditTicket}
                   onDeleteTicket={handleDeleteTicket}
                 />
