@@ -26,21 +26,18 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { assuntos, loading: assuntosLoading } = useAssuntos();
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
-    usuarioAfetado: '',
-    telefone: '',
-    ramal: '',
-    email: '',
-    notas: '',
-    chamadoNAPJe: '',
-    servidorResponsavel: '',
-    tipoPendencia: '',
-    resumo: '',
-    versao: '',
-    urgencia: '',
-    subsistema: '',
-    ambiente: '',
-    perfilCpfNome: '',
-    numeroProcessos: ''
+    chamadoOrigem: '',
+    numeroProcesso: '',
+    grau: '',
+    orgaoJulgador: '',
+    ojDetectada: '',
+    titulo: '',
+    descricao: '',
+    prioridade: 3,
+    tipo: '',
+    nomeUsuarioAfetado: '',
+    cpfUsuarioAfetado: '',
+    perfilUsuarioAfetado: ''
   });
   const [formData, setFormData] = useState({
     usuarioAfetado: '',
@@ -57,7 +54,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     subsistema: '',
     ambiente: '',
     perfilCpfNome: '',
-    numeroProcessos: ''
+    numeroProcessos: '',
+    assunto: ''
   });
 
   // Carregar dados do ticket para edição
@@ -131,7 +129,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         versao: formData.versao,
         subsistema: formData.subsistema,
         ambiente: formData.ambiente,
-        numero_processo: formData.numeroProcessos
+        numero_processo: formData.numeroProcessos,
+        assunto_id: formData.assunto || null
       };
 
       if (editingTicket) {
@@ -167,8 +166,23 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           description: "Chamado criado e salvo no banco de dados"
         });
 
-        // Configurar dados para o template JIRA
-        setJiraTemplateData(formData);
+        // Mapear dados para o template JIRA com as propriedades corretas
+        const mappedJiraData = {
+          chamadoOrigem: formData.chamadoNAPJe,
+          numeroProcesso: formData.numeroProcessos,
+          grau: ojData.grau || '',
+          orgaoJulgador: ojData.orgaoJulgador || '',
+          ojDetectada: ojData.ojDetectada || '',
+          titulo: formData.resumo,
+          descricao: formData.notas,
+          prioridade: parseInt(formData.urgencia),
+          tipo: formData.tipoPendencia,
+          nomeUsuarioAfetado: formData.usuarioAfetado,
+          cpfUsuarioAfetado: formData.perfilCpfNome,
+          perfilUsuarioAfetado: formData.perfilCpfNome
+        };
+        
+        setJiraTemplateData(mappedJiraData);
         setShowJiraModal(true);
 
         // Reset form apenas para novos chamados
@@ -187,7 +201,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           subsistema: '',
           ambiente: '',
           perfilCpfNome: '',
-          numeroProcessos: ''
+          numeroProcessos: '',
+          assunto: ''
         });
       }
     } catch (error) {
@@ -203,26 +218,33 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const handleJiraModalClose = () => {
     setShowJiraModal(false);
     setJiraTemplateData({
-      usuarioAfetado: '',
-      telefone: '',
-      ramal: '',
-      email: '',
-      notas: '',
-      chamadoNAPJe: '',
-      servidorResponsavel: '',
-      tipoPendencia: '',
-      resumo: '',
-      versao: '',
-      urgencia: '',
-      subsistema: '',
-      ambiente: '',
-      perfilCpfNome: '',
-      numeroProcessos: ''
+      chamadoOrigem: '',
+      numeroProcesso: '',
+      grau: '',
+      orgaoJulgador: '',
+      ojDetectada: '',
+      titulo: '',
+      descricao: '',
+      prioridade: 3,
+      tipo: '',
+      nomeUsuarioAfetado: '',
+      cpfUsuarioAfetado: '',
+      perfilUsuarioAfetado: ''
     });
     if (onTicketCreated) {
       onTicketCreated();
     }
   };
+
+  // Agrupar assuntos por categoria
+  const assuntosPorCategoria = assuntos.reduce((acc, assunto) => {
+    const categoria = assunto.categoria || 'Outros';
+    if (!acc[categoria]) {
+      acc[categoria] = [];
+    }
+    acc[categoria].push(assunto);
+    return acc;
+  }, {} as Record<string, typeof assuntos>);
 
   return (
     <div className="space-y-6">
@@ -289,6 +311,32 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   className="mt-1"
                 />
               </div>
+            </div>
+
+            {/* Campo de Assunto */}
+            <div>
+              <Label htmlFor="assunto" className="text-sm font-medium">
+                Assunto <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.assunto} onValueChange={(value) => setFormData(prev => ({ ...prev, assunto: value }))}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue placeholder="Selecione o assunto" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  {Object.entries(assuntosPorCategoria).map(([categoria, assuntosCategoria]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1 text-sm font-semibold text-gray-700 bg-gray-100">
+                        {categoria}
+                      </div>
+                      {assuntosCategoria.map((assunto) => (
+                        <SelectItem key={assunto.id} value={assunto.id}>
+                          {assunto.nome}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Notas - Campo Rico */}
