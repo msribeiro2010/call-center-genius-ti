@@ -10,18 +10,18 @@ interface JiraTemplateModalProps {
   isOpen: boolean;
   onClose: () => void;
   ticketData: {
-    chamadoOrigem: string;
-    numeroProcesso: string;
-    grau: string;
-    orgaoJulgador: string;
-    ojDetectada: string;
-    titulo: string;
-    descricao: string;
-    prioridade: number;
-    tipo: string;
-    nomeUsuarioAfetado: string;
-    cpfUsuarioAfetado: string;
-    perfilUsuarioAfetado: string;
+    notas: string;
+    chamadoNapje: string;
+    servidorResponsavel: string;
+    tipoPendencia: string;
+    resumo: string;
+    versao: string;
+    urgencia: string;
+    subsistema: string;
+    ambiente: string;
+    perfilCpfNome: string;
+    numeroProcessos: string;
+    assuntoId: string;
   };
 }
 
@@ -36,52 +36,48 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     });
   };
 
-  const formatPriority = (prioridade: number) => {
-    const priorityMap: { [key: number]: string } = {
-      1: 'Lowest',
-      2: 'Low', 
-      3: 'Medium',
-      4: 'High',
-      5: 'Highest'
-    };
-    return priorityMap[prioridade] || 'Medium';
-  };
-
   const formatType = (tipo: string) => {
     const typeMap: { [key: string]: string } = {
-      'incidente': 'Incident',
-      'requisicao': 'Service Request',
-      'problema': 'Problem',
-      'mudanca': 'Change'
+      'bug': 'Bug',
+      'melhoria': 'Improvement',
+      'nova-funcionalidade': 'New Feature',
+      'tarefa': 'Task',
+      'incidente': 'Incident'
     };
-    return typeMap[tipo] || 'Incident';
+    return typeMap[tipo] || 'Task';
   };
 
-  const formatUsuarioAfetado = () => {
-    if (ticketData.perfilUsuarioAfetado && ticketData.cpfUsuarioAfetado && ticketData.nomeUsuarioAfetado) {
-      return `${ticketData.perfilUsuarioAfetado}/${ticketData.cpfUsuarioAfetado}/${ticketData.nomeUsuarioAfetado}`;
-    }
-    return 'N/A';
+  const formatUrgency = (urgencia: string) => {
+    const urgencyMap: { [key: string]: string } = {
+      'baixa': 'Low',
+      'media': 'Medium', 
+      'alta': 'High',
+      'critica': 'Critical'
+    };
+    return urgencyMap[urgencia] || 'Medium';
   };
 
   const generateFullTemplate = () => {
-    return `RESUMO: ${ticketData.titulo}
+    return `RESUMO: ${ticketData.resumo}
 
-TIPO DE ISSUE: ${formatType(ticketData.tipo)}
+TIPO DE ISSUE: ${formatType(ticketData.tipoPendencia)}
 
-PRIORIDADE: ${formatPriority(ticketData.prioridade)}
+URGÊNCIA: ${formatUrgency(ticketData.urgencia)}
 
-DESCRIÇÃO:
-${ticketData.descricao}
+NOTAS:
+${ticketData.notas}
 
-USUÁRIO AFETADO: ${formatUsuarioAfetado()}
+DETALHES TÉCNICOS:
+- Chamado NAPJe: ${ticketData.chamadoNapje || 'N/A'}
+- Servidor Responsável: ${ticketData.servidorResponsavel}
+- Versão: ${ticketData.versao}
+- Subsistema: ${ticketData.subsistema}
+- Ambiente: ${ticketData.ambiente}
 
-INFORMAÇÕES ADICIONAIS:
-- Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
-- Número do Processo: ${ticketData.numeroProcesso || 'N/A'}
-- Grau: ${ticketData.grau ? `${ticketData.grau}º Grau` : 'N/A'}
-- Órgão Julgador: ${ticketData.orgaoJulgador || 'N/A'}
-- OJ Detectada: ${ticketData.ojDetectada || 'N/A'}
+USUÁRIO AFETADO: ${ticketData.perfilCpfNome}
+
+PROCESSOS ENVOLVIDOS:
+${ticketData.numeroProcessos || 'N/A'}
 
 Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
   };
@@ -143,95 +139,86 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
             <CardContent className="space-y-4">
               <CopyField 
                 label="RESUMO (Summary)" 
-                value={ticketData.titulo} 
+                value={ticketData.resumo} 
                 className="border-l-4 border-blue-500"
               />
               
               <div className="grid grid-cols-2 gap-4">
                 <CopyField 
                   label="TIPO DE ISSUE (Issue Type)" 
-                  value={formatType(ticketData.tipo)} 
+                  value={formatType(ticketData.tipoPendencia)} 
                 />
                 <CopyField 
-                  label="PRIORIDADE (Priority)" 
-                  value={formatPriority(ticketData.prioridade)} 
+                  label="URGÊNCIA (Priority)" 
+                  value={formatUrgency(ticketData.urgencia)} 
                 />
               </div>
 
               <CopyField 
-                label="DESCRIÇÃO (Description)" 
-                value={ticketData.descricao}
+                label="NOTAS (Description)" 
+                value={ticketData.notas}
                 className="border-l-4 border-green-500"
-              />
-
-              <CopyField 
-                label="USUÁRIO AFETADO" 
-                value={formatUsuarioAfetado()}
-                className="border-l-4 border-red-500"
               />
             </CardContent>
           </Card>
 
-          {/* Informações do Usuário Afetado */}
+          {/* Informações Técnicas */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-blue-700">Dados do Usuário Afetado</CardTitle>
+              <CardTitle className="text-lg text-blue-700">Informações Técnicas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <CopyField 
-                  label="Nome Completo" 
-                  value={ticketData.nomeUsuarioAfetado} 
+                  label="Chamado NAPJe" 
+                  value={ticketData.chamadoNapje} 
                 />
                 <CopyField 
-                  label="CPF" 
-                  value={ticketData.cpfUsuarioAfetado} 
-                />
-                <CopyField 
-                  label="Perfil" 
-                  value={ticketData.perfilUsuarioAfetado} 
+                  label="Servidor Responsável" 
+                  value={ticketData.servidorResponsavel} 
                 />
               </div>
 
+              <div className="grid grid-cols-3 gap-4">
+                <CopyField 
+                  label="Versão" 
+                  value={ticketData.versao} 
+                />
+                <CopyField 
+                  label="Subsistema" 
+                  value={ticketData.subsistema} 
+                />
+                <CopyField 
+                  label="Ambiente" 
+                  value={ticketData.ambiente} 
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Informações do Usuário */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg text-blue-700">Usuário Afetado</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <CopyField 
-                label="Formato JIRA (Perfil/CPF/Nome)" 
-                value={formatUsuarioAfetado()}
+                label="Perfil/CPF/Nome Completo" 
+                value={ticketData.perfilCpfNome}
                 className="border-l-4 border-purple-500"
               />
             </CardContent>
           </Card>
 
-          {/* Informações Adicionais */}
+          {/* Processos */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg text-blue-700">Informações do Processo</CardTitle>
+              <CardTitle className="text-lg text-blue-700">Processos Envolvidos</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <CopyField 
-                  label="Chamado de Origem" 
-                  value={ticketData.chamadoOrigem} 
-                />
-                <CopyField 
-                  label="Número do Processo" 
-                  value={ticketData.numeroProcesso} 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <CopyField 
-                  label="Grau" 
-                  value={ticketData.grau ? `${ticketData.grau}º Grau` : ''} 
-                />
-                <CopyField 
-                  label="Órgão Julgador" 
-                  value={ticketData.orgaoJulgador} 
-                />
-              </div>
-
               <CopyField 
-                label="OJ Detectada" 
-                value={ticketData.ojDetectada}
+                label="Números dos Processos" 
+                value={ticketData.numeroProcessos}
                 className="border-l-4 border-orange-500"
               />
             </CardContent>
