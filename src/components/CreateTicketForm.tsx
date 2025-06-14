@@ -12,6 +12,7 @@ import JiraTemplateModal from './JiraTemplateModal';
 import { useOJDetection } from '@/hooks/useOJDetection';
 import { useAssuntos } from '@/hooks/useAssuntos';
 import { useCPFValidation } from '@/hooks/useCPFValidation';
+import { useUsuarios } from '@/hooks/useUsuarios';
 import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
 import DescriptionImprover from './DescriptionImprover';
 import SearchableAssuntoSelect from './SearchableAssuntoSelect';
@@ -26,6 +27,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { ojData, detectarOJ, clearOJData } = useOJDetection();
   const { assuntos, loading: assuntosLoading } = useAssuntos();
   const { cpfError, validateCPF, formatCPF, setCpfError } = useCPFValidation();
+  const { buscarUsuarioPorCPF, salvarUsuario, loading: usuariosLoading } = useUsuarios();
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
     chamadoOrigem: '',
@@ -118,16 +120,50 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
-  const handleCPFChange = (value: string) => {
+  const handleCPFChange = async (value: string) => {
     // Formatar CPF enquanto digita
     const formattedCPF = formatCPF(value);
     setFormData(prev => ({ ...prev, cpfUsuarioAfetado: formattedCPF }));
     
     // Validar apenas se o campo estiver completo
     if (formattedCPF.length === 14) {
-      validateCPF(formattedCPF);
+      const isValid = validateCPF(formattedCPF);
+      
+      if (isValid) {
+        // Buscar usuário existente pelo CPF
+        const usuarioExistente = await buscarUsuarioPorCPF(formattedCPF);
+        
+        if (usuarioExistente) {
+          // Preencher automaticamente os campos com os dados encontrados
+          setFormData(prev => ({
+            ...prev,
+            nomeUsuarioAfetado: usuarioExistente.nome_completo,
+            perfilUsuarioAfetado: usuarioExistente.perfil || ''
+          }));
+          
+          toast({
+            title: "Usuário encontrado",
+            description: `Dados de ${usuarioExistente.nome_completo} preenchidos automaticamente`,
+          });
+        } else {
+          // Limpar campos se não encontrar usuário
+          setFormData(prev => ({
+            ...prev,
+            nomeUsuarioAfetado: '',
+            perfilUsuarioAfetado: ''
+          }));
+        }
+      }
     } else {
       setCpfError('');
+      // Limpar campos quando CPF não estiver completo
+      if (formattedCPF.length < 14) {
+        setFormData(prev => ({
+          ...prev,
+          nomeUsuarioAfetado: '',
+          perfilUsuarioAfetado: ''
+        }));
+      }
     }
   };
 
@@ -154,6 +190,15 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
 
     try {
+      // Salvar ou atualizar usuário se todos os dados estiverem preenchidos
+      if (formData.cpfUsuarioAfetado && formData.nomeUsuarioAfetado && formData.perfilUsuarioAfetado) {
+        await salvarUsuario(
+          formData.cpfUsuarioAfetado,
+          formData.nomeUsuarioAfetado,
+          formData.perfilUsuarioAfetado
+        );
+      }
+
       if (editingTicket) {
         // Atualizar chamado existente
         const { error } = await supabase
@@ -358,9 +403,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                     maxLength={14}
                     className={cpfError ? "border-red-500" : ""}
                     required
+                    disabled={usuariosLoading}
                   />
                   {cpfError && (
                     <p className="text-sm text-red-500 mt-1">{cpfError}</p>
+                  )}
+                  {usuariosLoading && (
+                    <p className="text-sm text-blue-500 mt-1">Buscando usuário...</p>
                   )}
                 </div>
 

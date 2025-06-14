@@ -140,6 +140,33 @@ export type Database = {
           },
         ]
       }
+      usuarios: {
+        Row: {
+          cpf: string
+          created_at: string
+          id: string
+          nome_completo: string
+          perfil: string | null
+          updated_at: string
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          id?: string
+          nome_completo: string
+          perfil?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          id?: string
+          nome_completo?: string
+          perfil?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
