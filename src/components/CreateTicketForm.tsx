@@ -48,7 +48,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     chamadoNAPJe: '',
     servidorResponsavel: '',
     tipoPendencia: '',
-    resumo: '',
     versao: '',
     urgencia: '',
     subsistema: '',
@@ -71,13 +70,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         chamadoNAPJe: editingTicket.chamado_origem || '',
         servidorResponsavel: editingTicket.servidor_responsavel || '',
         tipoPendencia: editingTicket.tipo || '',
-        resumo: editingTicket.titulo || '',
         versao: editingTicket.versao || '',
         urgencia: editingTicket.prioridade?.toString() || '3',
         subsistema: editingTicket.subsistema || '',
         ambiente: editingTicket.ambiente || '',
         perfilCpfNome: editingTicket.cpf_usuario_afetado || '',
-        numeroProcessos: editingTicket.numero_processo || ''
+        numeroProcessos: editingTicket.numero_processo || '',
+        assunto: editingTicket.assunto_id || ''
       });
     } else {
       // Limpar formulário quando não está editando
@@ -90,13 +89,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         chamadoNAPJe: '',
         servidorResponsavel: '',
         tipoPendencia: '',
-        resumo: '',
         versao: '',
         urgencia: '3',
         subsistema: '',
         ambiente: '',
         perfilCpfNome: '',
-        numeroProcessos: ''
+        numeroProcessos: '',
+        assunto: ''
       });
     }
   }, [editingTicket]);
@@ -104,7 +103,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.resumo || !formData.notas || !formData.usuarioAfetado) {
+    if (!formData.notas || !formData.usuarioAfetado) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -115,7 +114,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
 
     try {
       const chamadoData = {
-        titulo: formData.resumo,
+        titulo: formData.notas.substring(0, 100), // Use first 100 chars of description as title
         descricao: formData.notas,
         nome_usuario_afetado: formData.usuarioAfetado,
         cpf_usuario_afetado: formData.perfilCpfNome,
@@ -173,7 +172,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           grau: ojData.grau || '',
           orgaoJulgador: ojData.orgaoJulgador || '',
           ojDetectada: ojData.ojDetectada || '',
-          titulo: formData.resumo,
+          titulo: formData.notas.substring(0, 100),
           descricao: formData.notas,
           prioridade: parseInt(formData.urgencia),
           tipo: formData.tipoPendencia,
@@ -195,7 +194,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           chamadoNAPJe: '',
           servidorResponsavel: '',
           tipoPendencia: '',
-          resumo: '',
           versao: '',
           urgencia: '3',
           subsistema: '',
@@ -395,7 +393,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
             </div>
 
-            {/* Quarta linha - Tipo de Pendência e Resumo */}
+            {/* Quarta linha - Tipo de Pendência e Versão */}
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="tipoPendencia" className="text-sm font-medium">
@@ -416,23 +414,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
               
               <div>
-                <Label htmlFor="resumo" className="text-sm font-medium">
-                  <span className="text-red-500">*</span>Resumo
-                </Label>
-                <Input
-                  id="resumo"
-                  value={formData.resumo}
-                  onChange={(e) => setFormData(prev => ({ ...prev, resumo: e.target.value }))}
-                  placeholder="Resumo da issue"
-                  className="mt-1"
-                  required
-                />
-              </div>
-            </div>
-
-            {/* Quinta linha - Versão e Urgência */}
-            <div className="grid grid-cols-2 gap-6">
-              <div>
                 <Label htmlFor="versao" className="text-sm font-medium">
                   <span className="text-red-500">*</span>Versão
                 </Label>
@@ -445,7 +426,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   required
                 />
               </div>
-              
+            </div>
+
+            {/* Quinta linha - Urgência e Subsistema */}
+            <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="urgencia" className="text-sm font-medium">
                   <span className="text-red-500">*</span>Urgência
@@ -463,10 +447,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Sexta linha - Subsistema e Ambiente */}
-            <div className="grid grid-cols-2 gap-6">
+              
               <div>
                 <Label htmlFor="subsistema" className="text-sm font-medium">
                   <span className="text-red-500">*</span>Subsistema
@@ -484,7 +465,10 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
-              
+            </div>
+
+            {/* Sexta linha - Ambiente e Perfil/CPF/Nome */}
+            <div className="grid grid-cols-2 gap-6">
               <div>
                 <Label htmlFor="ambiente" className="text-sm font-medium">
                   <span className="text-red-500">*</span>Ambiente
@@ -501,10 +485,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Sétima linha - Perfil/CPF/Nome e Número dos processos */}
-            <div className="grid grid-cols-2 gap-6">
+              
               <div>
                 <Label htmlFor="perfilCpfNome" className="text-sm font-medium">
                   <span className="text-red-500">*</span>Perfil/CPF/Nome completo do usuário
@@ -518,18 +499,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   required
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="numeroProcessos" className="text-sm font-medium">Número dos processos</Label>
-                <Textarea
-                  id="numeroProcessos"
-                  value={formData.numeroProcessos}
-                  onChange={(e) => setFormData(prev => ({ ...prev, numeroProcessos: e.target.value }))}
-                  placeholder="Liste os números dos processos envolvidos"
-                  rows={3}
-                  className="mt-1"
-                />
-              </div>
+            </div>
+
+            {/* Sétima linha - Número dos processos */}
+            <div>
+              <Label htmlFor="numeroProcessos" className="text-sm font-medium">Número dos processos</Label>
+              <Textarea
+                id="numeroProcessos"
+                value={formData.numeroProcessos}
+                onChange={(e) => setFormData(prev => ({ ...prev, numeroProcessos: e.target.value }))}
+                placeholder="Liste os números dos processos envolvidos"
+                rows={3}
+                className="mt-1"
+              />
             </div>
 
             <div className="flex gap-4 pt-6">
