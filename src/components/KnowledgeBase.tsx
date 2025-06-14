@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
@@ -6,9 +5,10 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
-import { Search, ThumbsUp, Eye, Plus, X } from 'lucide-react';
+import { Search, ThumbsUp, Eye, Plus, X, File } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
+import FileUpload from './FileUpload';
 
 interface KnowledgeItem {
   id: string;
@@ -20,6 +20,7 @@ interface KnowledgeItem {
   visualizacoes: number;
   util_count: number;
   created_at: string;
+  arquivo_print?: string;
 }
 
 const KnowledgeBase = () => {
@@ -35,7 +36,8 @@ const KnowledgeBase = () => {
     problema_descricao: '',
     solucao: '',
     categoria: '',
-    tags: ''
+    tags: '',
+    arquivo_print: ''
   });
 
   useEffect(() => {
@@ -148,7 +150,8 @@ const KnowledgeBase = () => {
           problema_descricao: formData.problema_descricao,
           solucao: formData.solucao,
           categoria: formData.categoria || 'Geral',
-          tags: tagsArray
+          tags: tagsArray,
+          arquivo_print: formData.arquivo_print || null
         });
 
       if (error) throw error;
@@ -164,7 +167,8 @@ const KnowledgeBase = () => {
         problema_descricao: '',
         solucao: '',
         categoria: '',
-        tags: ''
+        tags: '',
+        arquivo_print: ''
       });
       setShowCreateForm(false);
       
@@ -178,6 +182,13 @@ const KnowledgeBase = () => {
         variant: "destructive"
       });
     }
+  };
+
+  const getFileUrl = (filePath: string) => {
+    const { data } = supabase.storage
+      .from('knowledge-base-files')
+      .getPublicUrl(filePath);
+    return data.publicUrl;
   };
 
   if (loading) {
@@ -223,7 +234,15 @@ const KnowledgeBase = () => {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-semibold text-lg">{item.titulo}</h3>
-                    <Badge variant="outline">{item.categoria}</Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline">{item.categoria}</Badge>
+                      {item.arquivo_print && (
+                        <Badge variant="secondary" className="text-xs">
+                          <File className="h-3 w-3 mr-1" />
+                          Anexo
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                   
                   <p className="text-gray-600 mb-3">{item.problema_descricao}</p>
@@ -341,6 +360,14 @@ const KnowledgeBase = () => {
                 />
               </div>
 
+              <FileUpload
+                label="Print de Tela / Arquivo de Apoio"
+                onFileUploaded={(filePath) => setFormData(prev => ({ ...prev, arquivo_print: filePath }))}
+                currentFile={formData.arquivo_print}
+                onFileRemoved={() => setFormData(prev => ({ ...prev, arquivo_print: '' }))}
+                accept="image/*,.pdf,.doc,.docx"
+              />
+
               <div className="flex gap-2 pt-4">
                 <Button type="submit" className="flex-1">
                   Criar Conhecimento
@@ -365,7 +392,15 @@ const KnowledgeBase = () => {
             <div className="flex justify-between items-start">
               <div>
                 <CardTitle>{selectedItem.titulo}</CardTitle>
-                <Badge variant="outline" className="mt-2">{selectedItem.categoria}</Badge>
+                <div className="flex items-center gap-2 mt-2">
+                  <Badge variant="outline">{selectedItem.categoria}</Badge>
+                  {selectedItem.arquivo_print && (
+                    <Badge variant="secondary" className="text-xs">
+                      <File className="h-3 w-3 mr-1" />
+                      Anexo
+                    </Badge>
+                  )}
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -389,6 +424,33 @@ const KnowledgeBase = () => {
                   <p className="text-gray-800">{selectedItem.solucao}</p>
                 </div>
               </div>
+
+              {selectedItem.arquivo_print && (
+                <div>
+                  <h4 className="font-semibold mb-2">Arquivo de Apoio:</h4>
+                  <div className="border border-gray-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-gray-600">Arquivo anexado</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open(getFileUrl(selectedItem.arquivo_print!), '_blank')}
+                      >
+                        Abrir Arquivo
+                      </Button>
+                    </div>
+                    
+                    {selectedItem.arquivo_print.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/i) && (
+                      <img 
+                        src={getFileUrl(selectedItem.arquivo_print)} 
+                        alt="Print de tela" 
+                        className="max-w-full max-h-64 object-contain rounded border cursor-pointer"
+                        onClick={() => window.open(getFileUrl(selectedItem.arquivo_print!), '_blank')}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
               
               <div className="flex flex-wrap gap-1">
                 {selectedItem.tags.map((tag, index) => (

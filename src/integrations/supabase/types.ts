@@ -35,6 +35,7 @@ export type Database = {
       }
       base_conhecimento: {
         Row: {
+          arquivo_print: string | null
           categoria: string | null
           created_at: string
           id: string
@@ -47,6 +48,7 @@ export type Database = {
           visualizacoes: number | null
         }
         Insert: {
+          arquivo_print?: string | null
           categoria?: string | null
           created_at?: string
           id?: string
@@ -59,6 +61,7 @@ export type Database = {
           visualizacoes?: number | null
         }
         Update: {
+          arquivo_print?: string | null
           categoria?: string | null
           created_at?: string
           id?: string
