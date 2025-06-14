@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { FileText, Search, Database, BookOpen, TrendingUp, Zap, Sparkles, Target } from 'lucide-react';
+import { FileText, Search, TrendingUp, Sparkles } from 'lucide-react';
 
 interface StatsCardsProps {
   stats: {
@@ -31,14 +31,6 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
       shadowColor: "shadow-orange-500/20"
     },
     {
-      title: "Em Andamento",
-      value: stats.inProgress,
-      icon: TrendingUp,
-      gradient: "from-green-500 to-emerald-500",
-      bgGradient: "from-green-500/10 to-emerald-500/10",
-      shadowColor: "shadow-green-500/20"
-    },
-    {
       title: "Base de Conhecimento",
       value: stats.templates,
       icon: Sparkles,
@@ -49,7 +41,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
       {statsConfig.map((stat, index) => {
         const IconComponent = stat.icon;
         return (
