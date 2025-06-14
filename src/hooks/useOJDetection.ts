@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { primeiroGrauOJs, segundoGrauOJs } from '@/data/ojData';
+import { primeiroGrauOJs, segundoGrauOJs } from '@/data';
 
 export interface OJData {
   grau: string;

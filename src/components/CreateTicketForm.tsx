@@ -14,7 +14,7 @@ import { useOJDetection } from '@/hooks/useOJDetection';
 import { useAssuntos } from '@/hooks/useAssuntos';
 import { useCPFValidation } from '@/hooks/useCPFValidation';
 import { useUsuarios } from '@/hooks/useUsuarios';
-import { primeiroGrauOJs, segundoGrauOJs } from '@/data/ojData';
+import { primeiroGrauOJs, segundoGrauOJs } from '@/data';
 import DescriptionImprover from './DescriptionImprover';
 import SearchableAssuntoSelect from './SearchableAssuntoSelect';
 
