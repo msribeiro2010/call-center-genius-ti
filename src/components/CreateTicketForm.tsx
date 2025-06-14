@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -13,7 +14,7 @@ import { useOJDetection } from '@/hooks/useOJDetection';
 import { useAssuntos } from '@/hooks/useAssuntos';
 import { useCPFValidation } from '@/hooks/useCPFValidation';
 import { useUsuarios } from '@/hooks/useUsuarios';
-import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
+import { primeiroGrauOJs, segundoGrauOJs } from '@/data/ojData';
 import DescriptionImprover from './DescriptionImprover';
 import SearchableAssuntoSelect from './SearchableAssuntoSelect';
 
