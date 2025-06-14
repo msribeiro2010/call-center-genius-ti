@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Copy, X } from 'lucide-react';
 import { useToast } from './ui/use-toast';
+import { primeiroGrauOJs, segundoGrauOJs } from '@/data';
 
 interface JiraTemplateModalProps {
   isOpen: boolean;
@@ -37,14 +38,7 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
   };
 
   const formatPriority = (prioridade: number) => {
-    const priorityMap: { [key: number]: string } = {
-      1: 'Lowest',
-      2: 'Low', 
-      3: 'Medium',
-      4: 'High',
-      5: 'Highest'
-    };
-    return priorityMap[prioridade] || 'Medium';
+    return prioridade.toString();
   };
 
   const formatType = (tipo: string) => {
@@ -64,12 +58,27 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     return 'N/A';
   };
 
+  const getOJName = () => {
+    if (!ticketData.orgaoJulgador || !ticketData.grau) return 'N/A';
+    
+    // Buscar o nome do OJ baseado no grau selecionado pelo usuário
+    if (ticketData.grau === '1') {
+      const oj = primeiroGrauOJs.find(oj => oj.codigo === ticketData.orgaoJulgador);
+      return oj ? oj.nome : ticketData.ojDetectada || 'N/A';
+    } else if (ticketData.grau === '2') {
+      const oj = segundoGrauOJs.find(oj => oj.codigo === ticketData.orgaoJulgador);
+      return oj ? oj.nome : ticketData.ojDetectada || 'N/A';
+    }
+    
+    return ticketData.ojDetectada || 'N/A';
+  };
+
   const generateFullTemplate = () => {
     return `RESUMO: ${ticketData.titulo}
 
 TIPO DE ISSUE: ${formatType(ticketData.tipo)}
 
-PRIORIDADE: ${ticketData.prioridade}
+PRIORIDADE: ${formatPriority(ticketData.prioridade)}
 
 DESCRIÇÃO:
 ${ticketData.descricao}
@@ -81,7 +90,7 @@ INFORMAÇÕES ADICIONAIS:
 - Número do Processo: ${ticketData.numeroProcesso || 'N/A'}
 - Grau: ${ticketData.grau ? `${ticketData.grau}º Grau` : 'N/A'}
 - Órgão Julgador: ${ticketData.orgaoJulgador || 'N/A'}
-- OJ Detectada: ${ticketData.ojDetectada || 'N/A'}
+- OJ Detectada: ${getOJName()}
 
 Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
   };
@@ -154,7 +163,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
                 />
                 <CopyField 
                   label="PRIORIDADE (Priority)" 
-                  value={ticketData.prioridade.toString()} 
+                  value={formatPriority(ticketData.prioridade)} 
                 />
               </div>
 
@@ -231,7 +240,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
 
               <CopyField 
                 label="OJ Detectada" 
-                value={ticketData.ojDetectada}
+                value={getOJName()}
                 className="border-l-4 border-orange-500"
               />
             </CardContent>
