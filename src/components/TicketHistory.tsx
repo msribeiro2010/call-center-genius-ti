@@ -8,12 +8,21 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Search, Eye, FileText, Database, Calendar, User } from "lucide-react";
 
 interface Ticket {
-  id: number;
-  title: string;
-  type: string;
-  status: string;
-  created: string;
-  priority: string;
+  id: string;
+  titulo: string;
+  created_at: string;
+  numero_processo?: string;
+  prioridade?: number;
+  tipo?: string;
+  status?: string;
+  chamado_origem?: string;
+  grau?: string;
+  orgao_julgador?: string;
+  oj_detectada?: string;
+  descricao?: string;
+  nome_usuario_afetado?: string;
+  cpf_usuario_afetado?: string;
+  perfil_usuario_afetado?: string;
 }
 
 interface TicketHistoryProps {
@@ -22,44 +31,25 @@ interface TicketHistoryProps {
 
 const TicketHistory = ({ tickets }: TicketHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedTicket, setSelectedTicket] = useState<any>(null);
+  const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  // Dados expandidos dos chamados para demonstração
-  const ticketDetails = {
-    1: {
-      description: "Usuários não conseguem fazer login no sistema. O erro aparece após inserir credenciais válidas.",
-      environment: "Produção",
-      steps: "1. Acessar tela de login\n2. Inserir credenciais\n3. Clicar em entrar\n4. Erro é exibido",
-      expectedResult: "Login deveria ser realizado com sucesso",
-      actualResult: "Mensagem de erro 'Falha na autenticação' é exibida",
-      jiraText: "h2. Problema de Login\nUsuários não conseguem acessar o sistema...",
-      sqlQuery: "SELECT * FROM user_sessions WHERE login_attempts > 3 AND timestamp >= NOW() - INTERVAL 1 HOUR;",
-      images: ["screenshot_error.png"],
-      assignee: "João Silva",
-      reporter: "Maria Santos"
-    },
-    2: {
-      description: "Sistema de vendas apresenta lentidão excessiva durante picos de acesso.",
-      environment: "Produção",
-      steps: "1. Acessar módulo de vendas\n2. Tentar criar nova venda\n3. Observar demora no carregamento",
-      expectedResult: "Tela deveria carregar em até 3 segundos",
-      actualResult: "Tela demora mais de 15 segundos para carregar",
-      jiraText: "h2. Problema de Performance\nSistema de vendas com lentidão...",
-      sqlQuery: "SELECT query_time, query FROM slow_queries WHERE execution_time > 5 ORDER BY execution_time DESC;",
-      images: ["performance_metrics.png"],
-      assignee: "Pedro Costa",
-      reporter: "Ana Oliveira"
-    }
-  };
-
-  const filteredTickets = tickets.filter(ticket =>
-    ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar tickets com verificação de segurança
+  const filteredTickets = tickets.filter(ticket => {
+    if (!ticket || typeof ticket !== 'object') return false;
+    
+    const titulo = ticket.titulo || '';
+    const tipo = ticket.tipo || '';
+    const status = ticket.status || '';
+    
+    return titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           status.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   const getStatusColor = (status: string) => {
+    if (!status) return "bg-gray-100 text-gray-800";
+    
     switch (status.toLowerCase()) {
       case "aberto":
         return "bg-red-100 text-red-800";
@@ -74,26 +64,42 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority.toLowerCase()) {
-      case "crítica":
-        return "bg-red-500 text-white";
-      case "alta":
-        return "bg-orange-500 text-white";
-      case "média":
-        return "bg-yellow-500 text-white";
-      case "baixa":
-        return "bg-green-500 text-white";
+  const getPriorityColor = (prioridade: number) => {
+    switch (prioridade) {
+      case 5:
+        return "bg-red-500 text-white"; // Crítica
+      case 4:
+        return "bg-orange-500 text-white"; // Alta
+      case 3:
+        return "bg-yellow-500 text-white"; // Média
+      case 2:
+        return "bg-green-500 text-white"; // Baixa
+      case 1:
+        return "bg-green-500 text-white"; // Muito baixa
       default:
         return "bg-gray-500 text-white";
     }
   };
 
+  const getPriorityLabel = (prioridade: number) => {
+    switch (prioridade) {
+      case 5:
+        return "Crítica";
+      case 4:
+        return "Alta";
+      case 3:
+        return "Média";
+      case 2:
+        return "Baixa";
+      case 1:
+        return "Muito baixa";
+      default:
+        return "Não definida";
+    }
+  };
+
   const openTicketDetails = (ticket: Ticket) => {
-    setSelectedTicket({
-      ...ticket,
-      ...(ticketDetails as any)[ticket.id]
-    });
+    setSelectedTicket(ticket);
     setIsDetailsOpen(true);
   };
 
@@ -127,27 +133,33 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-3 mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">#{ticket.id} - {ticket.title}</h3>
-                    <Badge className={getPriorityColor(ticket.priority)}>
-                      {ticket.priority}
-                    </Badge>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      #{ticket.id} - {ticket.titulo}
+                    </h3>
+                    {ticket.prioridade && (
+                      <Badge className={getPriorityColor(ticket.prioridade)}>
+                        {getPriorityLabel(ticket.prioridade)}
+                      </Badge>
+                    )}
                   </div>
                   
                   <div className="flex items-center space-x-4 text-sm text-gray-500">
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-4 w-4" />
-                      <span>{ticket.created}</span>
+                      <span>{new Date(ticket.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
-                    <div className="flex items-center space-x-1">
-                      <FileText className="h-4 w-4" />
-                      <span>{ticket.type}</span>
-                    </div>
+                    {ticket.tipo && (
+                      <div className="flex items-center space-x-1">
+                        <FileText className="h-4 w-4" />
+                        <span>{ticket.tipo}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <Badge className={getStatusColor(ticket.status)}>
-                    {ticket.status}
+                  <Badge className={getStatusColor(ticket.status || '')}>
+                    {ticket.status || 'Sem status'}
                   </Badge>
                   
                   <Button
@@ -182,10 +194,10 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              Chamado #{selectedTicket?.id} - {selectedTicket?.title}
+              Chamado #{selectedTicket?.id} - {selectedTicket?.titulo}
             </DialogTitle>
             <DialogDescription>
-              Visualize todos os detalhes do chamado e os textos gerados
+              Visualize todos os detalhes do chamado
             </DialogDescription>
           </DialogHeader>
 
@@ -200,108 +212,107 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
                   <CardContent className="space-y-3">
                     <div className="flex justify-between">
                       <span className="font-medium">Status:</span>
-                      <Badge className={getStatusColor(selectedTicket.status)}>
-                        {selectedTicket.status}
+                      <Badge className={getStatusColor(selectedTicket.status || '')}>
+                        {selectedTicket.status || 'Sem status'}
                       </Badge>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Prioridade:</span>
-                      <Badge className={getPriorityColor(selectedTicket.priority)}>
-                        {selectedTicket.priority}
-                      </Badge>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Tipo:</span>
-                      <span>{selectedTicket.type}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="font-medium">Ambiente:</span>
-                      <span>{selectedTicket.environment}</span>
-                    </div>
+                    {selectedTicket.prioridade && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Prioridade:</span>
+                        <Badge className={getPriorityColor(selectedTicket.prioridade)}>
+                          {getPriorityLabel(selectedTicket.prioridade)}
+                        </Badge>
+                      </div>
+                    )}
+                    {selectedTicket.tipo && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Tipo:</span>
+                        <span>{selectedTicket.tipo}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="font-medium">Criado em:</span>
-                      <span>{selectedTicket.created}</span>
+                      <span>{new Date(selectedTicket.created_at).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Responsáveis</CardTitle>
+                    <CardTitle className="text-lg">Dados do Processo</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">Responsável:</span>
-                      <span>{selectedTicket.assignee}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <User className="h-4 w-4 text-gray-500" />
-                      <span className="font-medium">Solicitante:</span>
-                      <span>{selectedTicket.reporter}</span>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Descrição */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Descrição do Problema</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700">{selectedTicket.description}</p>
-                </CardContent>
-              </Card>
-
-              {/* Texto JIRA e Query */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
-                      <FileText className="h-5 w-5 text-blue-600" />
-                      <span>Texto JIRA</span>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="bg-gray-50 p-4 rounded-lg max-h-64 overflow-y-auto">
-                      <pre className="text-sm whitespace-pre-wrap">{selectedTicket.jiraText}</pre>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {selectedTicket.sqlQuery && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="flex items-center space-x-2">
-                        <Database className="h-5 w-5 text-green-600" />
-                        <span>Query SQL</span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <pre className="text-sm">{selectedTicket.sqlQuery}</pre>
+                    {selectedTicket.numero_processo && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Número do Processo:</span>
+                        <span className="text-right font-mono text-sm">{selectedTicket.numero_processo}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
+                    )}
+                    {selectedTicket.grau && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Grau:</span>
+                        <span>{selectedTicket.grau}</span>
+                      </div>
+                    )}
+                    {selectedTicket.orgao_julgador && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Órgão Julgador:</span>
+                        <span>{selectedTicket.orgao_julgador}</span>
+                      </div>
+                    )}
+                    {selectedTicket.oj_detectada && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">OJ Detectada:</span>
+                        <span className="text-right max-w-[200px] break-words">{selectedTicket.oj_detectada}</span>
+                      </div>
+                    )}
+                    {selectedTicket.chamado_origem && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Chamado Origem:</span>
+                        <span>{selectedTicket.chamado_origem}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Evidências */}
-              {selectedTicket.images && selectedTicket.images.length > 0 && (
+              {/* Usuário Afetado */}
+              {(selectedTicket.nome_usuario_afetado || selectedTicket.cpf_usuario_afetado || selectedTicket.perfil_usuario_afetado) && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Evidências</CardTitle>
+                    <CardTitle className="text-lg">Usuário Afetado</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    {selectedTicket.nome_usuario_afetado && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Nome:</span>
+                        <span>{selectedTicket.nome_usuario_afetado}</span>
+                      </div>
+                    )}
+                    {selectedTicket.cpf_usuario_afetado && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">CPF:</span>
+                        <span className="font-mono">{selectedTicket.cpf_usuario_afetado}</span>
+                      </div>
+                    )}
+                    {selectedTicket.perfil_usuario_afetado && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Perfil:</span>
+                        <Badge variant="outline">{selectedTicket.perfil_usuario_afetado}</Badge>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Descrição do Problema */}
+              {selectedTicket.descricao && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Descrição do Problema</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedTicket.images.map((image: string, index: number) => (
-                        <Badge key={index} variant="outline" className="px-3 py-1">
-                          <FileText className="h-3 w-3 mr-1" />
-                          {image}
-                        </Badge>
-                      ))}
-                    </div>
+                    <p className="text-gray-700 whitespace-pre-wrap">{selectedTicket.descricao}</p>
                   </CardContent>
                 </Card>
               )}
