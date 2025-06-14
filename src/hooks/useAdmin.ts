@@ -61,8 +61,11 @@ export const useAdmin = () => {
       const { data, error } = await supabase
         .from('user_sessions')
         .select(`
-          *,
-          profiles:user_id (
+          id,
+          user_id,
+          last_seen,
+          is_online,
+          profiles!user_sessions_user_id_fkey (
             nome_completo,
             email,
             avatar_url
@@ -91,8 +94,13 @@ export const useAdmin = () => {
       let query = supabase
         .from('admin_messages')
         .select(`
-          *,
-          from_profiles:from_user_id (
+          id,
+          from_user_id,
+          to_user_id,
+          message,
+          read,
+          created_at,
+          from_profiles:profiles!admin_messages_from_user_id_fkey (
             nome_completo,
             email
           )
