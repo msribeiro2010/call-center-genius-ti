@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -14,6 +13,7 @@ import { useOJDetection } from '@/hooks/useOJDetection';
 import { useAssuntos } from '@/hooks/useAssuntos';
 import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
 import DescriptionImprover from './DescriptionImprover';
+import SearchableAssuntoSelect from './SearchableAssuntoSelect';
 
 interface CreateTicketFormProps {
   onTicketCreated?: () => void;
@@ -306,32 +306,16 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
             </div>
 
-            {/* Campo de Assunto */}
+            {/* Campo de Assunto com busca */}
             <div>
               <Label htmlFor="assunto">Assunto *</Label>
-              <Select 
-                value={formData.assuntoId} 
+              <SearchableAssuntoSelect
+                value={formData.assuntoId}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, assuntoId: value }))}
-                disabled={assuntosLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione o assunto"} />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  {Object.entries(assuntosPorCategoria).map(([categoria, assuntosCategoria]) => (
-                    <div key={categoria}>
-                      <div className="px-2 py-1 text-sm font-semibold text-gray-500 bg-gray-50">
-                        {categoria}
-                      </div>
-                      {assuntosCategoria.map((assunto) => (
-                        <SelectItem key={assunto.id} value={assunto.id}>
-                          {assunto.nome}
-                        </SelectItem>
-                      ))}
-                    </div>
-                  ))}
-                </SelectContent>
-              </Select>
+                assuntos={assuntos}
+                loading={assuntosLoading}
+                placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione ou digite para buscar assunto..."}
+              />
             </div>
 
             {/* Seção do Usuário Afetado */}
