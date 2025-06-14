@@ -89,8 +89,13 @@ export const useOJDetection = () => {
     }
   };
 
+  // Modificar clearOJData para não limpar o grau
   const clearOJData = () => {
-    setOjData({ grau: '', orgaoJulgador: '', ojDetectada: '' });
+    setOjData(prev => ({ 
+      grau: prev.grau, // Manter o grau atual
+      orgaoJulgador: '', 
+      ojDetectada: '' 
+    }));
   };
 
   return {

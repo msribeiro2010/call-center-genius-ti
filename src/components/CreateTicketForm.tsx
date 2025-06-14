@@ -96,17 +96,16 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   }, [editingTicket]);
 
-  // Sync with OJ detection hook
+  // Sync with OJ detection hook - apenas orgaoJulgador e ojDetectada
   useEffect(() => {
     if (!editingTicket) {
       setFormData(prev => ({
         ...prev,
-        grau: ojData.grau,
         orgaoJulgador: ojData.orgaoJulgador,
         ojDetectada: ojData.ojDetectada
       }));
     }
-  }, [ojData, editingTicket]);
+  }, [ojData.orgaoJulgador, ojData.ojDetectada, editingTicket]);
 
   const handleProcessoChange = (value: string) => {
     console.log('Mudança no processo:', value);
@@ -130,7 +129,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       ojDetectada: '' 
     }));
     
-    // Limpar dados de OJ ao mudar o grau
+    // Limpar apenas os dados de OJ, mas manter o grau no hook
     clearOJData();
     
     // Se há um número de processo e o usuário escolheu 1º grau, detectar OJ automaticamente
