@@ -349,17 +349,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="nomeUsuarioAfetado">Nome Completo *</Label>
-                  <Input
-                    id="nomeUsuarioAfetado"
-                    value={formData.nomeUsuarioAfetado}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nomeUsuarioAfetado: e.target.value }))}
-                    placeholder="Nome completo do usuário"
-                    required
-                  />
-                </div>
-
-                <div>
                   <Label htmlFor="cpfUsuarioAfetado">CPF *</Label>
                   <Input
                     id="cpfUsuarioAfetado"
@@ -373,6 +362,17 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   {cpfError && (
                     <p className="text-sm text-red-500 mt-1">{cpfError}</p>
                   )}
+                </div>
+
+                <div>
+                  <Label htmlFor="nomeUsuarioAfetado">Nome Completo *</Label>
+                  <Input
+                    id="nomeUsuarioAfetado"
+                    value={formData.nomeUsuarioAfetado}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nomeUsuarioAfetado: e.target.value }))}
+                    placeholder="Nome completo do usuário"
+                    required
+                  />
                 </div>
 
                 <div>
