@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_messages: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          message: string
+          read: boolean | null
+          to_user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          message: string
+          read?: boolean | null
+          to_user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          message?: string
+          read?: boolean | null
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       assuntos: {
         Row: {
           categoria: string | null
@@ -149,6 +176,7 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_admin: boolean | null
           nome_completo: string | null
           updated_at: string
         }
@@ -157,6 +185,7 @@ export type Database = {
           created_at?: string
           email: string
           id: string
+          is_admin?: boolean | null
           nome_completo?: string | null
           updated_at?: string
         }
@@ -165,8 +194,30 @@ export type Database = {
           created_at?: string
           email?: string
           id?: string
+          is_admin?: boolean | null
           nome_completo?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          id: string
+          is_online: boolean | null
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          is_online?: boolean | null
+          last_seen?: string
+          user_id?: string
         }
         Relationships: []
       }
