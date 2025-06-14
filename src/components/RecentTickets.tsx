@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
@@ -110,6 +109,11 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                         {ticket.numero_processo && (
                           <p className="text-sm text-gray-600">Processo: {ticket.numero_processo}</p>
                         )}
+                        {ticket.chamado_origem && (
+                          <p className="text-sm text-blue-600 font-medium">
+                            Originado do chamado: {ticket.chamado_origem}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2">
                         {ticket.prioridade && (
@@ -206,6 +210,12 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                         <Badge variant="outline">{selectedTicket.tipo}</Badge>
                       </div>
                     )}
+                    {selectedTicket.chamado_origem && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Chamado Origem:</span>
+                        <span className="text-blue-600 font-medium">{selectedTicket.chamado_origem}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span className="font-medium">Criado em:</span>
                       <span>{new Date(selectedTicket.created_at).toLocaleDateString('pt-BR')}</span>
@@ -240,12 +250,6 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                       <div className="flex justify-between">
                         <span className="font-medium">OJ Detectada:</span>
                         <span className="text-right max-w-[200px] break-words">{selectedTicket.oj_detectada}</span>
-                      </div>
-                    )}
-                    {selectedTicket.chamado_origem && (
-                      <div className="flex justify-between">
-                        <span className="font-medium">Chamado Origem:</span>
-                        <span>{selectedTicket.chamado_origem}</span>
                       </div>
                     )}
                   </CardContent>
