@@ -26,6 +26,7 @@ export const useTickets = () => {
   const [filteredTickets, setFilteredTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [knowledgeBaseCount, setKnowledgeBaseCount] = useState(0);
   const { toast } = useToast();
 
   const fetchTickets = async () => {
@@ -58,6 +59,23 @@ export const useTickets = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchKnowledgeBaseCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('base_conhecimento')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Erro ao buscar contagem da base de conhecimento:', error);
+        return;
+      }
+
+      setKnowledgeBaseCount(count || 0);
+    } catch (error) {
+      console.error('Erro ao buscar contagem da base de conhecimento:', error);
     }
   };
 
@@ -114,6 +132,7 @@ export const useTickets = () => {
 
   useEffect(() => {
     fetchTickets();
+    fetchKnowledgeBaseCount();
   }, []);
 
   useEffect(() => {
@@ -124,7 +143,7 @@ export const useTickets = () => {
     totalTickets: tickets.length,
     openTickets: tickets.filter(t => t.status === 'Aberto').length,
     inProgress: tickets.filter(t => t.status === 'Em Andamento').length,
-    templates: 0, // This would come from knowledge base
+    templates: knowledgeBaseCount,
   };
 
   return {
