@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from './ui/use-toast';
@@ -8,12 +7,14 @@ interface DescriptionImproverProps {
   currentDescription: string;
   onImprovedDescription: (improvedText: string) => void;
   context?: string;
+  numeroProcesso?: string;
 }
 
 const DescriptionImprover: React.FC<DescriptionImproverProps> = ({
   currentDescription,
   onImprovedDescription,
-  context
+  context,
+  numeroProcesso
 }) => {
   const { toast } = useToast();
   const [isImproving, setIsImproving] = useState(false);
@@ -33,7 +34,7 @@ const DescriptionImprover: React.FC<DescriptionImproverProps> = ({
     // Simular processamento para melhor UX
     setTimeout(() => {
       try {
-        const improvedText = applyImprovementRules(currentDescription, context);
+        const improvedText = applyImprovementRules(currentDescription, context, numeroProcesso);
         onImprovedDescription(improvedText);
         toast({
           title: "Sucesso!",
@@ -52,7 +53,7 @@ const DescriptionImprover: React.FC<DescriptionImproverProps> = ({
     }, 1000);
   };
 
-  const applyImprovementRules = (text: string, context?: string): string => {
+  const applyImprovementRules = (text: string, context?: string, numeroProcesso?: string): string => {
     let improved = text;
 
     // 1. Correções básicas de português
@@ -69,11 +70,8 @@ const DescriptionImprover: React.FC<DescriptionImproverProps> = ({
       .replace(/\bestao\b/gi, 'estão')
       .replace(/\btao\b/gi, 'tão');
 
-    // 2. Estruturação técnica
-    if (!improved.includes('PROBLEMA:') && !improved.includes('ERRO:')) {
-      const sections = extractSections(improved);
-      improved = formatTechnicalStructure(sections, context);
-    }
+    // 2. Estruturação mais refinada sem formatação em markdown
+    improved = createRefinedDescription(improved, numeroProcesso);
 
     // 3. Melhorias de clareza
     improved = improveClarityAndTone(improved);
@@ -82,6 +80,52 @@ const DescriptionImprover: React.FC<DescriptionImproverProps> = ({
     improved = finalFormatting(improved);
 
     return improved;
+  };
+
+  const createRefinedDescription = (text: string, numeroProcesso?: string): string => {
+    // Remove formatações desnecessárias
+    let refined = text
+      .replace(/\*\*/g, '') // Remove asteriscos
+      .replace(/PROBLEMA RELATADO:/gi, '') // Remove "Problema Relatado"
+      .replace(/CONTEXTO:/gi, '') // Remove "Contexto"
+      .replace(/incidente$/gi, '') // Remove "incidente" no final
+      .replace(/requisicao$/gi, '') // Remove "requisicao" no final
+      .replace(/problema$/gi, '') // Remove "problema" no final
+      .replace(/mudanca$/gi, '') // Remove "mudanca" no final
+      .trim();
+
+    // Limpa IDs e códigos desnecessários do contexto
+    refined = refined.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/gi, '');
+    refined = refined.replace(/\s+-\s+/g, ' '); // Remove traços isolados
+
+    // Melhora a estrutura da descrição
+    const sentences = refined.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    let structuredText = '';
+
+    if (sentences.length > 0) {
+      // Primeira frase como descrição principal
+      structuredText = sentences[0].trim();
+      
+      // Adiciona o número do processo se disponível
+      if (numeroProcesso && numeroProcesso.trim()) {
+        structuredText += ` relacionado ao processo ${numeroProcesso}`;
+      }
+
+      // Adiciona frases adicionais se houver
+      if (sentences.length > 1) {
+        const additionalInfo = sentences.slice(1).join('. ').trim();
+        if (additionalInfo) {
+          structuredText += `. ${additionalInfo}`;
+        }
+      }
+
+      // Garante que termina com ponto
+      if (!structuredText.endsWith('.')) {
+        structuredText += '.';
+      }
+    }
+
+    return structuredText || refined;
   };
 
   const extractSections = (text: string) => {

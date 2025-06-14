@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -527,6 +526,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   currentDescription={formData.descricao}
                   onImprovedDescription={handleImprovedDescription}
                   context={`${formData.assuntoId} - ${formData.tipo}`}
+                  numeroProcesso={formData.numeroProcesso}
                 />
               </div>
               <Textarea
