@@ -1,33 +1,11 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-
-interface UserSession {
-  id: string;
-  user_id: string;
-  last_seen: string;
-  is_online: boolean;
-  profiles?: {
-    nome_completo: string;
-    email: string;
-    avatar_url?: string;
-  };
-}
-
-interface AdminMessage {
-  id: string;
-  from_user_id: string;
-  to_user_id: string;
-  message: string;
-  read: boolean;
-  created_at: string;
-  from_profiles?: {
-    nome_completo: string;
-    email: string;
-  };
-}
+import { userSessionService } from '@/services/userSessionService';
+import { adminMessageService } from '@/services/adminMessageService';
+import { adminService } from '@/services/adminService';
+import type { UserSession, AdminMessage } from '@/types/admin';
 
 export const useAdmin = () => {
   const [userSessions, setUserSessions] = useState<UserSession[]>([]);
@@ -42,14 +20,8 @@ export const useAdmin = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('is_admin')
-        .eq('id', user.id)
-        .single();
-
-      if (error) throw error;
-      setIsAdmin(data?.is_admin || false);
+      const adminStatus = await adminService.checkAdminStatus(user.id);
+      setIsAdmin(adminStatus);
     } catch (error) {
       console.error('Erro ao verificar status de admin:', error);
     }
@@ -58,38 +30,8 @@ export const useAdmin = () => {
   // Buscar usuários logados
   const fetchUserSessions = async () => {
     try {
-      // First get user sessions
-      const { data: sessions, error: sessionsError } = await supabase
-        .from('user_sessions')
-        .select('id, user_id, last_seen, is_online')
-        .eq('is_online', true)
-        .order('last_seen', { ascending: false });
-
-      if (sessionsError) throw sessionsError;
-
-      if (!sessions || sessions.length === 0) {
-        setUserSessions([]);
-        return;
-      }
-
-      // Get user IDs
-      const userIds = sessions.map(session => session.user_id);
-
-      // Get profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, nome_completo, email, avatar_url')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Combine sessions with profiles
-      const sessionsWithProfiles = sessions.map(session => ({
-        ...session,
-        profiles: profiles?.find(profile => profile.id === session.user_id) || undefined
-      }));
-
-      setUserSessions(sessionsWithProfiles);
+      const sessions = await userSessionService.fetchUserSessions();
+      setUserSessions(sessions);
     } catch (error) {
       console.error('Erro ao buscar sessões:', error);
       toast({
@@ -105,41 +47,8 @@ export const useAdmin = () => {
     if (!user) return;
 
     try {
-      let query = supabase
-        .from('admin_messages')
-        .select('id, from_user_id, to_user_id, message, read, created_at')
-        .order('created_at', { ascending: true });
-
-      if (userId) {
-        query = query.or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`);
-      }
-
-      const { data: messages, error: messagesError } = await query;
-      if (messagesError) throw messagesError;
-
-      if (!messages || messages.length === 0) {
-        setMessages([]);
-        return;
-      }
-
-      // Get unique user IDs from messages
-      const userIds = [...new Set(messages.map(msg => msg.from_user_id))];
-
-      // Get profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, nome_completo, email')
-        .in('id', userIds);
-
-      if (profilesError) throw profilesError;
-
-      // Combine messages with profiles
-      const messagesWithProfiles = messages.map(message => ({
-        ...message,
-        from_profiles: profiles?.find(profile => profile.id === message.from_user_id) || undefined
-      }));
-
-      setMessages(messagesWithProfiles);
+      const messages = await adminMessageService.fetchMessages(userId);
+      setMessages(messages);
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error);
     }
@@ -150,15 +59,7 @@ export const useAdmin = () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from('admin_messages')
-        .insert({
-          from_user_id: user.id,
-          to_user_id: toUserId,
-          message
-        });
-
-      if (error) throw error;
+      await adminMessageService.sendMessage(user.id, toUserId, message);
 
       toast({
         title: "Mensagem enviada",
@@ -182,13 +83,7 @@ export const useAdmin = () => {
     if (!user) return;
 
     try {
-      await supabase
-        .from('user_sessions')
-        .upsert({
-          user_id: user.id,
-          last_seen: new Date().toISOString(),
-          is_online: true
-        });
+      await userSessionService.updateUserSession(user.id);
     } catch (error) {
       console.error('Erro ao atualizar sessão:', error);
     }
