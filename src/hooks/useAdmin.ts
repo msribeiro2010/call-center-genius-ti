@@ -58,24 +58,38 @@ export const useAdmin = () => {
   // Buscar usuários logados
   const fetchUserSessions = async () => {
     try {
-      const { data, error } = await supabase
+      // First get user sessions
+      const { data: sessions, error: sessionsError } = await supabase
         .from('user_sessions')
-        .select(`
-          id,
-          user_id,
-          last_seen,
-          is_online,
-          profiles!user_sessions_user_id_fkey (
-            nome_completo,
-            email,
-            avatar_url
-          )
-        `)
+        .select('id, user_id, last_seen, is_online')
         .eq('is_online', true)
         .order('last_seen', { ascending: false });
 
-      if (error) throw error;
-      setUserSessions(data || []);
+      if (sessionsError) throw sessionsError;
+
+      if (!sessions || sessions.length === 0) {
+        setUserSessions([]);
+        return;
+      }
+
+      // Get user IDs
+      const userIds = sessions.map(session => session.user_id);
+
+      // Get profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, nome_completo, email, avatar_url')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine sessions with profiles
+      const sessionsWithProfiles = sessions.map(session => ({
+        ...session,
+        profiles: profiles?.find(profile => profile.id === session.user_id) || undefined
+      }));
+
+      setUserSessions(sessionsWithProfiles);
     } catch (error) {
       console.error('Erro ao buscar sessões:', error);
       toast({
@@ -93,27 +107,39 @@ export const useAdmin = () => {
     try {
       let query = supabase
         .from('admin_messages')
-        .select(`
-          id,
-          from_user_id,
-          to_user_id,
-          message,
-          read,
-          created_at,
-          from_profiles:profiles!admin_messages_from_user_id_fkey (
-            nome_completo,
-            email
-          )
-        `)
+        .select('id, from_user_id, to_user_id, message, read, created_at')
         .order('created_at', { ascending: true });
 
       if (userId) {
         query = query.or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      setMessages(data || []);
+      const { data: messages, error: messagesError } = await query;
+      if (messagesError) throw messagesError;
+
+      if (!messages || messages.length === 0) {
+        setMessages([]);
+        return;
+      }
+
+      // Get unique user IDs from messages
+      const userIds = [...new Set(messages.map(msg => msg.from_user_id))];
+
+      // Get profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, nome_completo, email')
+        .in('id', userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Combine messages with profiles
+      const messagesWithProfiles = messages.map(message => ({
+        ...message,
+        from_profiles: profiles?.find(profile => profile.id === message.from_user_id) || undefined
+      }));
+
+      setMessages(messagesWithProfiles);
     } catch (error) {
       console.error('Erro ao buscar mensagens:', error);
     }
