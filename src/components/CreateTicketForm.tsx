@@ -96,10 +96,9 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   }, [editingTicket]);
 
-  // Sync with OJ detection hook apenas se o usuário não selecionou manualmente o grau
+  // Sync with OJ detection hook
   useEffect(() => {
-    if (!editingTicket && !formData.grau) {
-      // Só aplica a detecção automática se o usuário não escolheu um grau manualmente
+    if (!editingTicket) {
       setFormData(prev => ({
         ...prev,
         grau: ojData.grau,
@@ -107,13 +106,13 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         ojDetectada: ojData.ojDetectada
       }));
     }
-  }, [ojData, editingTicket, formData.grau]);
+  }, [ojData, editingTicket]);
 
   const handleProcessoChange = (value: string) => {
     setFormData(prev => ({ ...prev, numeroProcesso: value }));
-    if (value.trim() && !editingTicket && !formData.grau) {
-      // Só detecta automaticamente se o usuário não selecionou um grau manualmente
-      detectarOJ(value);
+    if (value.trim() && !editingTicket) {
+      // Passar o grau selecionado para a detecção
+      detectarOJ(value, formData.grau);
     } else if (!value.trim()) {
       clearOJData();
     }
@@ -124,11 +123,14 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       ...prev, 
       grau: value, 
       orgaoJulgador: '', // Limpa o órgão julgador ao mudar o grau
-      ojDetectada: '' // Limpa a OJ detectada ao mudar o grau manualmente
+      ojDetectada: '' // Limpa a OJ detectada ao mudar o grau
     }));
     
-    // Se o usuário escolher um grau manualmente, limpa a detecção automática
-    if (value) {
+    // Se há um número de processo e o usuário escolheu 1º grau, detectar OJ automaticamente
+    if (value === '1' && formData.numeroProcesso.trim()) {
+      detectarOJ(formData.numeroProcesso, value);
+    } else {
+      // Para 2º grau ou quando não há processo, limpar dados
       clearOJData();
     }
   };
