@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -307,8 +306,12 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
-  const ojOptions = formData.grau === '1' ? primeiroGrauOJs : 
-                   formData.grau === '2' ? segundoGrauOJs : [];
+  // Filter out invalid OJ options to prevent empty value props
+  const ojOptions = formData.grau === '1' ? 
+    primeiroGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
+    formData.grau === '2' ? 
+    segundoGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
+    [];
 
   const handleJiraModalClose = () => {
     setShowJiraModal(false);
