@@ -31,32 +31,31 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { buscarUsuarioPorCPF, salvarUsuario, loading: usuariosLoading } = useUsuarios();
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
-    chamadoOrigem: '',
-    numeroProcesso: '',
-    grau: '',
-    orgaoJulgador: '',
-    ojDetectada: '',
-    titulo: '',
-    descricao: '',
-    prioridade: 3,
-    tipo: '',
-    nomeUsuarioAfetado: '',
-    cpfUsuarioAfetado: '',
-    perfilUsuarioAfetado: '',
+    notas: '',
+    chamadoNapje: '',
+    servidorResponsavel: '',
+    tipoPendencia: '',
+    resumo: '',
+    versao: '',
+    urgencia: '',
+    subsistema: '',
+    ambiente: '',
+    perfilCpfNome: '',
+    numeroProcessos: '',
     assuntoId: ''
   });
   const [formData, setFormData] = useState({
-    chamadoOrigem: '',
-    numeroProcesso: '',
-    grau: '',
-    orgaoJulgador: '',
-    ojDetectada: '',
-    descricao: '',
-    prioridade: 3,
-    tipo: '',
-    nomeUsuarioAfetado: '',
-    cpfUsuarioAfetado: '',
-    perfilUsuarioAfetado: '',
+    notas: '',
+    chamadoNapje: '',
+    servidorResponsavel: '',
+    tipoPendencia: '',
+    resumo: '',
+    versao: '',
+    urgencia: '',
+    subsistema: '',
+    ambiente: '',
+    perfilCpfNome: '',
+    numeroProcessos: '',
     assuntoId: ''
   });
 
@@ -65,103 +64,44 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     if (editingTicket) {
       console.log('Carregando dados para edição:', editingTicket);
       setFormData({
-        chamadoOrigem: editingTicket.chamado_origem || '',
-        numeroProcesso: editingTicket.numero_processo || '',
-        grau: editingTicket.grau || '',
-        orgaoJulgador: editingTicket.orgao_julgador || '',
-        ojDetectada: editingTicket.oj_detectada || '',
-        descricao: editingTicket.descricao || '',
-        prioridade: editingTicket.prioridade || 3,
-        tipo: editingTicket.tipo || '',
-        nomeUsuarioAfetado: editingTicket.nome_usuario_afetado || '',
-        cpfUsuarioAfetado: editingTicket.cpf_usuario_afetado || '',
-        perfilUsuarioAfetado: editingTicket.perfil_usuario_afetado || '',
+        notas: editingTicket.notas || '',
+        chamadoNapje: editingTicket.chamado_napje || '',
+        servidorResponsavel: editingTicket.servidor_responsavel || '',
+        tipoPendencia: editingTicket.tipo_pendencia || '',
+        resumo: editingTicket.resumo || '',
+        versao: editingTicket.versao || '',
+        urgencia: editingTicket.urgencia || '',
+        subsistema: editingTicket.subsistema || '',
+        ambiente: editingTicket.ambiente || '',
+        perfilCpfNome: editingTicket.perfil_cpf_nome || '',
+        numeroProcessos: editingTicket.numero_processos || '',
         assuntoId: editingTicket.assunto_id || ''
       });
     } else {
       // Limpar formulário quando não está editando
       setFormData({
-        chamadoOrigem: '',
-        numeroProcesso: '',
-        grau: '',
-        orgaoJulgador: '',
-        ojDetectada: '',
-        descricao: '',
-        prioridade: 3,
-        tipo: '',
-        nomeUsuarioAfetado: '',
-        cpfUsuarioAfetado: '',
-        perfilUsuarioAfetado: '',
+        notas: '',
+        chamadoNapje: '',
+        servidorResponsavel: '',
+        tipoPendencia: '',
+        resumo: '',
+        versao: '',
+        urgencia: '',
+        subsistema: '',
+        ambiente: '',
+        perfilCpfNome: '',
+        numeroProcessos: '',
         assuntoId: ''
       });
     }
   }, [editingTicket]);
 
-  // Sync with OJ detection hook
-  useEffect(() => {
-    if (!editingTicket) {
-      setFormData(prev => ({
-        ...prev,
-        grau: ojData.grau,
-        orgaoJulgador: ojData.orgaoJulgador,
-        ojDetectada: ojData.ojDetectada
-      }));
-    }
-  }, [ojData, editingTicket]);
-
   const handleProcessoChange = (value: string) => {
-    setFormData(prev => ({ ...prev, numeroProcesso: value }));
+    setFormData(prev => ({ ...prev, numeroProcessos: value }));
     if (value.trim() && !editingTicket) {
       detectarOJ(value);
     } else if (!value.trim()) {
       clearOJData();
-    }
-  };
-
-  const handleCPFChange = async (value: string) => {
-    // Formatar CPF enquanto digita
-    const formattedCPF = formatCPF(value);
-    setFormData(prev => ({ ...prev, cpfUsuarioAfetado: formattedCPF }));
-    
-    // Validar apenas se o campo estiver completo
-    if (formattedCPF.length === 14) {
-      const isValid = validateCPF(formattedCPF);
-      
-      if (isValid) {
-        // Buscar usuário existente pelo CPF
-        const usuarioExistente = await buscarUsuarioPorCPF(formattedCPF);
-        
-        if (usuarioExistente) {
-          // Preencher automaticamente os campos com os dados encontrados
-          setFormData(prev => ({
-            ...prev,
-            nomeUsuarioAfetado: usuarioExistente.nome_completo,
-            perfilUsuarioAfetado: usuarioExistente.perfil || ''
-          }));
-          
-          toast({
-            title: "Usuário encontrado",
-            description: `Dados de ${usuarioExistente.nome_completo} preenchidos automaticamente`,
-          });
-        } else {
-          // Limpar campos se não encontrar usuário
-          setFormData(prev => ({
-            ...prev,
-            nomeUsuarioAfetado: '',
-            perfilUsuarioAfetado: ''
-          }));
-        }
-      }
-    } else {
-      setCpfError('');
-      // Limpar campos quando CPF não estiver completo
-      if (formattedCPF.length < 14) {
-        setFormData(prev => ({
-          ...prev,
-          nomeUsuarioAfetado: '',
-          perfilUsuarioAfetado: ''
-        }));
-      }
     }
   };
 
@@ -172,7 +112,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     const assuntoSelecionado = assuntos.find(a => a.id === formData.assuntoId);
     const titulo = assuntoSelecionado ? assuntoSelecionado.nome : '';
     
-    if (!formData.assuntoId || !formData.descricao) {
+    if (!formData.resumo || !formData.tipoPendencia) {
       toast({
         title: "Erro",
         description: "Preencha todos os campos obrigatórios",
@@ -181,43 +121,25 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       return;
     }
 
-    // Validar CPF antes de submeter
-    if (formData.cpfUsuarioAfetado && !validateCPF(formData.cpfUsuarioAfetado)) {
-      toast({
-        title: "Erro",
-        description: "CPF inválido",
-        variant: "destructive"
-      });
-      return;
-    }
-
     try {
-      // Salvar ou atualizar usuário se todos os dados estiverem preenchidos
-      if (formData.cpfUsuarioAfetado && formData.nomeUsuarioAfetado && formData.perfilUsuarioAfetado) {
-        await salvarUsuario(
-          formData.cpfUsuarioAfetado,
-          formData.nomeUsuarioAfetado,
-          formData.perfilUsuarioAfetado
-        );
-      }
-
       if (editingTicket) {
         // Atualizar chamado existente
         const { error } = await supabase
           .from('chamados')
           .update({
-            chamado_origem: formData.chamadoOrigem,
-            numero_processo: formData.numeroProcesso,
-            grau: formData.grau,
-            orgao_julgador: formData.orgaoJulgador,
-            oj_detectada: formData.ojDetectada,
             titulo: titulo,
-            descricao: formData.descricao,
-            prioridade: formData.prioridade,
-            tipo: formData.tipo,
-            nome_usuario_afetado: formData.nomeUsuarioAfetado,
-            cpf_usuario_afetado: formData.cpfUsuarioAfetado,
-            perfil_usuario_afetado: formData.perfilUsuarioAfetado,
+            descricao: formData.resumo,
+            notas: formData.notas,
+            chamado_napje: formData.chamadoNapje,
+            servidor_responsavel: formData.servidorResponsavel,
+            tipo_pendencia: formData.tipoPendencia,
+            resumo: formData.resumo,
+            versao: formData.versao,
+            urgencia: formData.urgencia,
+            subsistema: formData.subsistema,
+            ambiente: formData.ambiente,
+            perfil_cpf_nome: formData.perfilCpfNome,
+            numero_processos: formData.numeroProcessos,
             assunto_id: formData.assuntoId || null,
             updated_at: new Date().toISOString()
           })
@@ -238,18 +160,19 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         const { error } = await supabase
           .from('chamados')
           .insert({
-            chamado_origem: formData.chamadoOrigem,
-            numero_processo: formData.numeroProcesso,
-            grau: formData.grau,
-            orgao_julgador: formData.orgaoJulgador,
-            oj_detectada: formData.ojDetectada,
             titulo: titulo,
-            descricao: formData.descricao,
-            prioridade: formData.prioridade,
-            tipo: formData.tipo,
-            nome_usuario_afetado: formData.nomeUsuarioAfetado,
-            cpf_usuario_afetado: formData.cpfUsuarioAfetado,
-            perfil_usuario_afetado: formData.perfilUsuarioAfetado,
+            descricao: formData.resumo,
+            notas: formData.notas,
+            chamado_napje: formData.chamadoNapje,
+            servidor_responsavel: formData.servidorResponsavel,
+            tipo_pendencia: formData.tipoPendencia,
+            resumo: formData.resumo,
+            versao: formData.versao,
+            urgencia: formData.urgencia,
+            subsistema: formData.subsistema,
+            ambiente: formData.ambiente,
+            perfil_cpf_nome: formData.perfilCpfNome,
+            numero_processos: formData.numeroProcessos,
             assunto_id: formData.assuntoId || null
           });
 
@@ -261,38 +184,24 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         });
 
         // Configurar dados para o template JIRA com os dados atuais do formulário
-        setJiraTemplateData({
-          chamadoOrigem: formData.chamadoOrigem,
-          numeroProcesso: formData.numeroProcesso,
-          grau: formData.grau,
-          orgaoJulgador: formData.orgaoJulgador,
-          ojDetectada: formData.ojDetectada,
-          titulo: titulo,
-          descricao: formData.descricao,
-          prioridade: formData.prioridade,
-          tipo: formData.tipo,
-          nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
-          cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
-          perfilUsuarioAfetado: formData.perfilUsuarioAfetado,
-          assuntoId: formData.assuntoId
-        });
+        setJiraTemplateData(formData);
 
         // Abrir modal do template JIRA apenas para novos chamados
         setShowJiraModal(true);
 
         // Reset form apenas para novos chamados
         setFormData({
-          chamadoOrigem: '',
-          numeroProcesso: '',
-          grau: '',
-          orgaoJulgador: '',
-          ojDetectada: '',
-          descricao: '',
-          prioridade: 3,
-          tipo: '',
-          nomeUsuarioAfetado: '',
-          cpfUsuarioAfetado: '',
-          perfilUsuarioAfetado: '',
+          notas: '',
+          chamadoNapje: '',
+          servidorResponsavel: '',
+          tipoPendencia: '',
+          resumo: '',
+          versao: '',
+          urgencia: '',
+          subsistema: '',
+          ambiente: '',
+          perfilCpfNome: '',
+          numeroProcessos: '',
           assuntoId: ''
         });
         clearOJData();
@@ -307,29 +216,20 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
-  // Filter out invalid OJ options to prevent empty value props
-  const ojOptions = formData.grau === '1' ? 
-    primeiroGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
-    formData.grau === '2' ? 
-    segundoGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
-    [];
-
   const handleJiraModalClose = () => {
     setShowJiraModal(false);
-    // Limpar dados do template quando fechar o modal
     setJiraTemplateData({
-      chamadoOrigem: '',
-      numeroProcesso: '',
-      grau: '',
-      orgaoJulgador: '',
-      ojDetectada: '',
-      titulo: '',
-      descricao: '',
-      prioridade: 3,
-      tipo: '',
-      nomeUsuarioAfetado: '',
-      cpfUsuarioAfetado: '',
-      perfilUsuarioAfetado: '',
+      notas: '',
+      chamadoNapje: '',
+      servidorResponsavel: '',
+      tipoPendencia: '',
+      resumo: '',
+      versao: '',
+      urgencia: '',
+      subsistema: '',
+      ambiente: '',
+      perfilCpfNome: '',
+      numeroProcessos: '',
       assuntoId: ''
     });
     if (onTicketCreated) {
@@ -337,210 +237,180 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     }
   };
 
-  const handleImprovedDescription = (improvedText: string) => {
-    setFormData(prev => ({ ...prev, descricao: improvedText }));
-  };
-
-  // Agrupar assuntos por categoria
-  const assuntosPorCategoria = assuntos.reduce((acc, assunto) => {
-    const categoria = assunto.categoria || 'Outros';
-    if (!acc[categoria]) {
-      acc[categoria] = [];
-    }
-    acc[categoria].push(assunto);
-    return acc;
-  }, {} as Record<string, typeof assuntos>);
-
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado'}</CardTitle>
+          <CardTitle>{editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado JIRA'}</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Notas */}
+            <div>
+              <Label htmlFor="notas">Notas</Label>
+              <Textarea
+                id="notas"
+                value={formData.notas}
+                onChange={(e) => setFormData(prev => ({ ...prev, notas: e.target.value }))}
+                placeholder="Adicione suas notas aqui..."
+                rows={4}
+                className="w-full"
+              />
+            </div>
+
+            {/* Grid com dois campos por linha */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="chamadoOrigem">Número do Chamado de Origem</Label>
+                <Label htmlFor="chamadoNapje">Chamado do NAPJe que originou a issue</Label>
                 <Input
-                  id="chamadoOrigem"
-                  value={formData.chamadoOrigem}
-                  onChange={(e) => setFormData(prev => ({ ...prev, chamadoOrigem: e.target.value }))}
+                  id="chamadoNapje"
+                  value={formData.chamadoNapje}
+                  onChange={(e) => setFormData(prev => ({ ...prev, chamadoNapje: e.target.value }))}
                   placeholder="Ex: HELP-12345"
                 />
               </div>
               
               <div>
-                <Label htmlFor="numeroProcesso">Número do Processo *</Label>
+                <Label htmlFor="servidorResponsavel">
+                  <span className="text-red-500">*</span> Servidor responsável pela abertura da issue
+                </Label>
                 <Input
-                  id="numeroProcesso"
-                  value={formData.numeroProcesso}
-                  onChange={(e) => handleProcessoChange(e.target.value)}
-                  placeholder="Ex: 0010750-13.2024.5.15.0023"
+                  id="servidorResponsavel"
+                  value={formData.servidorResponsavel}
+                  onChange={(e) => setFormData(prev => ({ ...prev, servidorResponsavel: e.target.value }))}
+                  placeholder="Nome do servidor responsável"
+                  required
                 />
               </div>
             </div>
 
-            {/* Campo de Assunto com busca */}
-            <div>
-              <Label htmlFor="assunto">Assunto *</Label>
-              <SearchableAssuntoSelect
-                value={formData.assuntoId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, assuntoId: value }))}
-                assuntos={assuntos}
-                loading={assuntosLoading}
-                placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione ou digite para buscar assunto..."}
-              />
-            </div>
-
-            {/* Seção do Usuário Afetado */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-4">Usuário Afetado</h3>
-              
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="cpfUsuarioAfetado">CPF *</Label>
-                  <Input
-                    id="cpfUsuarioAfetado"
-                    value={formData.cpfUsuarioAfetado}
-                    onChange={(e) => handleCPFChange(e.target.value)}
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                    className={cpfError ? "border-red-500" : ""}
-                    required
-                    disabled={usuariosLoading}
-                  />
-                  {cpfError && (
-                    <p className="text-sm text-red-500 mt-1">{cpfError}</p>
-                  )}
-                  {usuariosLoading && (
-                    <p className="text-sm text-blue-500 mt-1">Buscando usuário...</p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="nomeUsuarioAfetado">Nome Completo *</Label>
-                  <Input
-                    id="nomeUsuarioAfetado"
-                    value={formData.nomeUsuarioAfetado}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nomeUsuarioAfetado: e.target.value }))}
-                    placeholder="Nome completo do usuário"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="perfilUsuarioAfetado">Perfil *</Label>
-                  <Select value={formData.perfilUsuarioAfetado} onValueChange={(value) => setFormData(prev => ({ ...prev, perfilUsuarioAfetado: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o perfil" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Diretor">Diretor</SelectItem>
-                      <SelectItem value="Servidor">Servidor</SelectItem>
-                      <SelectItem value="Magistrado">Magistrado</SelectItem>
-                      <SelectItem value="Oficial">Oficial</SelectItem>
-                      <SelectItem value="Perito">Perito</SelectItem>
-                      <SelectItem value="Procurador">Procurador</SelectItem>
-                      <SelectItem value="Estagiário">Estagiário</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {formData.ojDetectada && (
-              <div className="p-3 bg-muted rounded-lg">
-                <Label className="text-sm font-medium">OJ Detectada:</Label>
-                <p className="text-sm text-muted-foreground">{formData.ojDetectada}</p>
-              </div>
-            )}
-
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="grau">Grau</Label>
-                <Select value={formData.grau} onValueChange={(value) => setFormData(prev => ({ ...prev, grau: value, orgaoJulgador: '' }))}>
+                <Label htmlFor="tipoPendencia">
+                  <span className="text-red-500">*</span> Tipo de Pendência
+                </Label>
+                <Select value={formData.tipoPendencia} onValueChange={(value) => setFormData(prev => ({ ...prev, tipoPendencia: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione o grau" />
+                    <SelectValue placeholder="Selecione o tipo de pendência" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1º Grau</SelectItem>
-                    <SelectItem value="2">2º Grau</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="orgaoJulgador">Órgão Julgador</Label>
-                <Select value={formData.orgaoJulgador} onValueChange={(value) => setFormData(prev => ({ ...prev, orgaoJulgador: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o órgão julgador" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ojOptions.map((oj) => (
-                      <SelectItem key={oj.codigo} value={oj.codigo}>
-                        {oj.codigo} - {oj.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="tipo">Tipo do Chamado</Label>
-                <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
+                    <SelectItem value="bug">Bug</SelectItem>
+                    <SelectItem value="melhoria">Melhoria</SelectItem>
+                    <SelectItem value="nova-funcionalidade">Nova Funcionalidade</SelectItem>
+                    <SelectItem value="tarefa">Tarefa</SelectItem>
                     <SelectItem value="incidente">Incidente</SelectItem>
-                    <SelectItem value="requisicao">Requisição</SelectItem>
-                    <SelectItem value="problema">Problema</SelectItem>
-                    <SelectItem value="mudanca">Mudança</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label htmlFor="prioridade">Prioridade</Label>
-                <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
+                <Label htmlFor="resumo">
+                  <span className="text-red-500">*</span> Resumo
+                </Label>
+                <Input
+                  id="resumo"
+                  value={formData.resumo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, resumo: e.target.value }))}
+                  placeholder="Resumo da issue"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="versao">
+                  <span className="text-red-500">*</span> Versão
+                </Label>
+                <Input
+                  id="versao"
+                  value={formData.versao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, versao: e.target.value }))}
+                  placeholder="Versão do sistema"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="urgencia">
+                  <span className="text-red-500">*</span> Urgência
+                </Label>
+                <Select value={formData.urgencia} onValueChange={(value) => setFormData(prev => ({ ...prev, urgencia: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
+                    <SelectValue placeholder="Selecione a urgência" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1">1 - Muito Baixa</SelectItem>
-                    <SelectItem value="2">2 - Baixa</SelectItem>
-                    <SelectItem value="3">3 - Média</SelectItem>
-                    <SelectItem value="4">4 - Alta</SelectItem>
-                    <SelectItem value="5">5 - Crítica</SelectItem>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                    <SelectItem value="critica">Crítica</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="subsistema">
+                  <span className="text-red-500">*</span> Subsistema
+                </Label>
+                <Select value={formData.subsistema} onValueChange={(value) => setFormData(prev => ({ ...prev, subsistema: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o subsistema" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pje">PJe</SelectItem>
+                    <SelectItem value="seeu">SEEU</SelectItem>
+                    <SelectItem value="saat">SAAT</SelectItem>
+                    <SelectItem value="outros">Outros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="ambiente">
+                  <span className="text-red-500">*</span> Ambiente
+                </Label>
+                <Select value={formData.ambiente} onValueChange={(value) => setFormData(prev => ({ ...prev, ambiente: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o ambiente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="producao">Produção</SelectItem>
+                    <SelectItem value="homologacao">Homologação</SelectItem>
+                    <SelectItem value="teste">Teste</SelectItem>
+                    <SelectItem value="desenvolvimento">Desenvolvimento</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="descricao">Descrição Detalhada *</Label>
-                <DescriptionImprover
-                  currentDescription={formData.descricao}
-                  onImprovedDescription={handleImprovedDescription}
-                  context={`${formData.assuntoId} - ${formData.tipo}`}
-                />
-              </div>
-              <Textarea
-                id="descricao"
-                value={formData.descricao}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                placeholder="Descreva detalhadamente o problema ou solicitação"
-                rows={4}
+              <Label htmlFor="perfilCpfNome">
+                <span className="text-red-500">*</span> Perfil/CPF/Nome completo do usuário
+              </Label>
+              <Input
+                id="perfilCpfNome"
+                value={formData.perfilCpfNome}
+                onChange={(e) => setFormData(prev => ({ ...prev, perfilCpfNome: e.target.value }))}
+                placeholder="Ex: Magistrado - 123.456.789-00 - João da Silva"
                 required
               />
             </div>
 
+            <div>
+              <Label htmlFor="numeroProcessos">Número dos processos</Label>
+              <Textarea
+                id="numeroProcessos"
+                value={formData.numeroProcessos}
+                onChange={(e) => handleProcessoChange(e.target.value)}
+                placeholder="Ex: 0010750-13.2024.5.15.0023&#10;1234567-89.2024.5.15.0001&#10;..."
+                rows={4}
+              />
+            </div>
+
             <Button type="submit" className="w-full">
-              {editingTicket ? 'Atualizar Chamado' : 'Criar Chamado'}
+              {editingTicket ? 'Atualizar Chamado' : 'Criar Chamado JIRA'}
             </Button>
           </form>
         </CardContent>
