@@ -65,7 +65,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
             <div className="absolute bottom-6 left-6 w-1 h-1 bg-white/20 rounded-full animate-bounce"></div>
             
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 relative z-10">
-              <CardTitle className="text-sm font-medium text-white/90 group-hover:text-white transition-colors duration-300">
+              <CardTitle className="text-sm font-medium text-gray-800 group-hover:text-gray-700 transition-colors duration-300">
                 {stat.title}
               </CardTitle>
               <div className={`p-2.5 rounded-xl bg-gradient-to-br ${stat.gradient} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
@@ -79,7 +79,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               </div>
               <div className="flex items-center gap-1 mt-2">
                 <TrendingUp className="w-3 h-3 text-green-400" />
-                <span className="text-xs text-white/60">Atualizado</span>
+                <span className="text-xs text-gray-600/80">Atualizado</span>
               </div>
             </CardContent>
             

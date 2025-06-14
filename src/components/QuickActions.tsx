@@ -96,16 +96,16 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                   </div>
                   
                   <div className="space-y-1">
-                    <h3 className="font-semibold text-white group-hover:text-white transition-colors duration-300">
+                    <h3 className="font-semibold text-gray-900 group-hover:text-gray-800 transition-colors duration-300">
                       {action.title}
                     </h3>
-                    <p className="text-xs text-white/60 group-hover:text-white/80 transition-colors duration-300">
+                    <p className="text-xs text-gray-700/80 group-hover:text-gray-600 transition-colors duration-300">
                       {action.description}
                     </p>
                   </div>
                   
                   {/* Arrow Indicator */}
-                  <ArrowRight className="w-4 h-4 text-white/40 group-hover:text-white/80 group-hover:translate-x-1 transition-all duration-300" />
+                  <ArrowRight className="w-4 h-4 text-gray-600/70 group-hover:text-gray-500 group-hover:translate-x-1 transition-all duration-300" />
                 </div>
                 
                 {/* Bottom Glow */}
