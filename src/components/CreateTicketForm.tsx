@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -10,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import ResponseTemplates from './ResponseTemplates';
 import JiraTemplateModal from './JiraTemplateModal';
 import { useOJDetection } from '@/hooks/useOJDetection';
+import { useAssuntos } from '@/hooks/useAssuntos';
 import { primeiroGrauOJs, segundoGrauOJs, titulosPadronizados } from '@/data/ojData';
 import DescriptionImprover from './DescriptionImprover';
 
@@ -21,6 +23,7 @@ interface CreateTicketFormProps {
 const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, editingTicket }) => {
   const { toast } = useToast();
   const { ojData, detectarOJ, clearOJData } = useOJDetection();
+  const { assuntos, loading: assuntosLoading } = useAssuntos();
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
     chamadoOrigem: '',
@@ -34,7 +37,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     tipo: '',
     nomeUsuarioAfetado: '',
     cpfUsuarioAfetado: '',
-    perfilUsuarioAfetado: ''
+    perfilUsuarioAfetado: '',
+    assuntoId: ''
   });
   const [formData, setFormData] = useState({
     chamadoOrigem: '',
@@ -48,7 +52,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     tipo: '',
     nomeUsuarioAfetado: '',
     cpfUsuarioAfetado: '',
-    perfilUsuarioAfetado: ''
+    perfilUsuarioAfetado: '',
+    assuntoId: ''
   });
 
   // Carregar dados do ticket para edição
@@ -67,7 +72,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         tipo: editingTicket.tipo || '',
         nomeUsuarioAfetado: editingTicket.nome_usuario_afetado || '',
         cpfUsuarioAfetado: editingTicket.cpf_usuario_afetado || '',
-        perfilUsuarioAfetado: editingTicket.perfil_usuario_afetado || ''
+        perfilUsuarioAfetado: editingTicket.perfil_usuario_afetado || '',
+        assuntoId: editingTicket.assunto_id || ''
       });
     } else {
       // Limpar formulário quando não está editando
@@ -83,7 +89,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
         tipo: '',
         nomeUsuarioAfetado: '',
         cpfUsuarioAfetado: '',
-        perfilUsuarioAfetado: ''
+        perfilUsuarioAfetado: '',
+        assuntoId: ''
       });
     }
   }, [editingTicket]);
@@ -139,6 +146,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             nome_usuario_afetado: formData.nomeUsuarioAfetado,
             cpf_usuario_afetado: formData.cpfUsuarioAfetado,
             perfil_usuario_afetado: formData.perfilUsuarioAfetado,
+            assunto_id: formData.assuntoId || null,
             updated_at: new Date().toISOString()
           })
           .eq('id', editingTicket.id);
@@ -169,7 +177,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
             tipo: formData.tipo,
             nome_usuario_afetado: formData.nomeUsuarioAfetado,
             cpf_usuario_afetado: formData.cpfUsuarioAfetado,
-            perfil_usuario_afetado: formData.perfilUsuarioAfetado
+            perfil_usuario_afetado: formData.perfilUsuarioAfetado,
+            assunto_id: formData.assuntoId || null
           });
 
         if (error) throw error;
@@ -192,7 +201,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           tipo: formData.tipo,
           nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
           cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
-          perfilUsuarioAfetado: formData.perfilUsuarioAfetado
+          perfilUsuarioAfetado: formData.perfilUsuarioAfetado,
+          assuntoId: formData.assuntoId
         });
 
         // Abrir modal do template JIRA apenas para novos chamados
@@ -211,7 +221,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
           tipo: '',
           nomeUsuarioAfetado: '',
           cpfUsuarioAfetado: '',
-          perfilUsuarioAfetado: ''
+          perfilUsuarioAfetado: '',
+          assuntoId: ''
         });
         clearOJData();
       }
@@ -243,7 +254,8 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
       tipo: '',
       nomeUsuarioAfetado: '',
       cpfUsuarioAfetado: '',
-      perfilUsuarioAfetado: ''
+      perfilUsuarioAfetado: '',
+      assuntoId: ''
     });
     if (onTicketCreated) {
       onTicketCreated();
@@ -253,6 +265,16 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const handleImprovedDescription = (improvedText: string) => {
     setFormData(prev => ({ ...prev, descricao: improvedText }));
   };
+
+  // Agrupar assuntos por categoria
+  const assuntosPorCategoria = assuntos.reduce((acc, assunto) => {
+    const categoria = assunto.categoria || 'Outros';
+    if (!acc[categoria]) {
+      acc[categoria] = [];
+    }
+    acc[categoria].push(assunto);
+    return acc;
+  }, {} as Record<string, typeof assuntos>);
 
   return (
     <div className="space-y-6">
@@ -282,6 +304,34 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   placeholder="Ex: 0010750-13.2024.5.15.0023"
                 />
               </div>
+            </div>
+
+            {/* Campo de Assunto */}
+            <div>
+              <Label htmlFor="assunto">Assunto *</Label>
+              <Select 
+                value={formData.assuntoId} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, assuntoId: value }))}
+                disabled={assuntosLoading}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione o assunto"} />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(assuntosPorCategoria).map(([categoria, assuntosCategoria]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1 text-sm font-semibold text-gray-500 bg-gray-50">
+                        {categoria}
+                      </div>
+                      {assuntosCategoria.map((assunto) => (
+                        <SelectItem key={assunto.id} value={assunto.id}>
+                          {assunto.nome}
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Seção do Usuário Afetado */}
@@ -400,6 +450,17 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div>
+              <Label htmlFor="titulo">Título *</Label>
+              <Input
+                id="titulo"
+                value={formData.titulo}
+                onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
+                placeholder="Título do chamado"
+                required
+              />
             </div>
 
             <div>

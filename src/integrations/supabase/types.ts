@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      assuntos: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       base_conhecimento: {
         Row: {
           categoria: string | null
@@ -50,6 +74,7 @@ export type Database = {
       }
       chamados: {
         Row: {
+          assunto_id: string | null
           chamado_origem: string | null
           cpf_usuario_afetado: string | null
           created_at: string
@@ -68,6 +93,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          assunto_id?: string | null
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
@@ -86,6 +112,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          assunto_id?: string | null
           chamado_origem?: string | null
           cpf_usuario_afetado?: string | null
           created_at?: string
@@ -103,7 +130,15 @@ export type Database = {
           titulo?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "chamados_assunto_id_fkey"
+            columns: ["assunto_id"]
+            isOneToOne: false
+            referencedRelation: "assuntos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

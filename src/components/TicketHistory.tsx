@@ -1,11 +1,18 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, Eye, FileText, Database, Calendar, User } from "lucide-react";
+import { Search, Eye, FileText, Database, Calendar, User, Tag } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Assunto {
+  id: string;
+  nome: string;
+  categoria: string;
+}
 
 interface Ticket {
   id: string;
@@ -23,6 +30,8 @@ interface Ticket {
   nome_usuario_afetado?: string;
   cpf_usuario_afetado?: string;
   perfil_usuario_afetado?: string;
+  assunto_id?: string;
+  assuntos?: Assunto;
 }
 
 interface TicketHistoryProps {
@@ -33,18 +42,53 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [ticketsWithAssuntos, setTicketsWithAssuntos] = useState<Ticket[]>([]);
+
+  // Buscar assuntos relacionados aos tickets
+  useEffect(() => {
+    const fetchTicketsWithAssuntos = async () => {
+      if (!tickets || tickets.length === 0) {
+        setTicketsWithAssuntos([]);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('chamados')
+          .select(`
+            *,
+            assuntos (
+              id,
+              nome,
+              categoria
+            )
+          `)
+          .in('id', tickets.map(t => t.id));
+
+        if (error) throw error;
+        setTicketsWithAssuntos(data || []);
+      } catch (error) {
+        console.error('Erro ao buscar tickets com assuntos:', error);
+        setTicketsWithAssuntos(tickets);
+      }
+    };
+
+    fetchTicketsWithAssuntos();
+  }, [tickets]);
 
   // Filtrar tickets com verificação de segurança
-  const filteredTickets = tickets.filter(ticket => {
+  const filteredTickets = ticketsWithAssuntos.filter(ticket => {
     if (!ticket || typeof ticket !== 'object') return false;
     
     const titulo = ticket.titulo || '';
     const tipo = ticket.tipo || '';
     const status = ticket.status || '';
+    const assunto = ticket.assuntos?.nome || '';
     
     return titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
            tipo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-           status.toLowerCase().includes(searchTerm.toLowerCase());
+           status.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           assunto.toLowerCase().includes(searchTerm.toLowerCase());
   });
 
   const getStatusColor = (status: string) => {
@@ -116,7 +160,7 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Pesquisar por título, tipo ou status..."
+              placeholder="Pesquisar por título, tipo, status ou assunto..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -143,7 +187,7 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
                     )}
                   </div>
                   
-                  <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <div className="flex items-center space-x-4 text-sm text-gray-500 mb-2">
                     <div className="flex items-center space-x-1">
                       <Calendar className="h-4 w-4" />
                       <span>{new Date(ticket.created_at).toLocaleDateString('pt-BR')}</span>
@@ -152,6 +196,12 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
                       <div className="flex items-center space-x-1">
                         <FileText className="h-4 w-4" />
                         <span>{ticket.tipo}</span>
+                      </div>
+                    )}
+                    {ticket.assuntos && (
+                      <div className="flex items-center space-x-1">
+                        <Tag className="h-4 w-4" />
+                        <span className="truncate max-w-xs">{ticket.assuntos.nome}</span>
                       </div>
                     )}
                   </div>
@@ -228,6 +278,15 @@ const TicketHistory = ({ tickets }: TicketHistoryProps) => {
                       <div className="flex justify-between">
                         <span className="font-medium">Tipo:</span>
                         <span>{selectedTicket.tipo}</span>
+                      </div>
+                    )}
+                    {selectedTicket.assuntos && (
+                      <div className="flex justify-between">
+                        <span className="font-medium">Assunto:</span>
+                        <div className="text-right">
+                          <div className="text-sm font-medium">{selectedTicket.assuntos.nome}</div>
+                          <div className="text-xs text-gray-500">{selectedTicket.assuntos.categoria}</div>
+                        </div>
                       </div>
                     )}
                     <div className="flex justify-between">
