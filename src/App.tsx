@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ChatBotPage from "./pages/ChatBotPage";
+import AdminPanel from "./components/AdminPanel";
 import { ErrorBoundary } from "react-error-boundary";
 
 const queryClient = new QueryClient({
@@ -51,6 +52,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/chatbot" element={<ChatBotPage />} />
+                <Route path="/admin" element={<AdminPanel />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
