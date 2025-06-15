@@ -30,25 +30,14 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
-  // Debug detalhado
-  console.log('=== SearchableAssuntoSelect DEBUG ===');
-  console.log('Loading:', loading);
-  console.log('Assuntos recebidos:', assuntos?.length || 0);
-  console.log('Value atual:', value);
-  console.log('Assuntos (primeiros 3):', assuntos?.slice(0, 3));
-
   // Agrupar assuntos por categoria
   const assuntosPorCategoria = useMemo(() => {
-    console.log('Agrupando', assuntos.length, 'assuntos por categoria...');
-    
     if (!Array.isArray(assuntos) || assuntos.length === 0) {
-      console.log('Array de assuntos vazio ou inválido');
       return {};
     }
 
     const grouped = assuntos.reduce((acc, assunto) => {
       if (!assunto || !assunto.nome) {
-        console.warn('Assunto inválido encontrado:', assunto);
         return acc;
       }
       
@@ -60,9 +49,6 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
       return acc;
     }, {} as Record<string, Assunto[]>);
 
-    console.log('Agrupamento concluído:', Object.keys(grouped).length, 'categorias');
-    console.log('Categorias:', Object.keys(grouped));
-    
     return grouped;
   }, [assuntos]);
 
@@ -92,7 +78,6 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
   const selectedAssunto = assuntos.find(assunto => assunto.id === value);
 
   if (loading) {
-    console.log('Renderizando estado de loading...');
     return (
       <Button
         variant="outline"
@@ -106,7 +91,6 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
   }
 
   if (!assuntos || assuntos.length === 0) {
-    console.log('Renderizando estado sem assuntos...');
     return (
       <Button
         variant="outline"
@@ -118,8 +102,6 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
       </Button>
     );
   }
-
-  console.log('Renderizando select normal com', assuntos.length, 'assuntos');
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -151,7 +133,6 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
                     key={assunto.id}
                     value={assunto.nome}
                     onSelect={() => {
-                      console.log('Assunto selecionado:', assunto);
                       onValueChange(assunto.id);
                       setOpen(false);
                       setSearchValue('');
