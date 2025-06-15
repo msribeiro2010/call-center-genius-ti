@@ -22,7 +22,7 @@ export const useOJDetection = () => {
     if (match) {
       const codigoOJ = match[1];
       
-      // Se o usuário selecionou um grau específico, usar apenas esse grau
+      // Se o usuário selecionou um grau específico, buscar apenas nesse grau
       if (grauSelecionado === '1') {
         // Buscar apenas nos OJs do 1º grau
         const oj1Grau = primeiroGrauOJs.find(oj => oj.codigo === codigoOJ);
@@ -45,10 +45,26 @@ export const useOJDetection = () => {
           return notFoundData;
         }
       } else if (grauSelecionado === '2') {
-        // Se selecionou 2º grau, não fazer detecção automática
-        const emptyData = { grau: '2', orgaoJulgador: '', ojDetectada: '' };
-        setOjData(emptyData);
-        return emptyData;
+        // Buscar apenas nos OJs do 2º grau
+        const oj2Grau = segundoGrauOJs.find(oj => oj.codigo === codigoOJ);
+        
+        if (oj2Grau) {
+          const newOjData = {
+            grau: '2',
+            orgaoJulgador: codigoOJ,
+            ojDetectada: oj2Grau.nome
+          };
+          setOjData(newOjData);
+          return newOjData;
+        } else {
+          const notFoundData = {
+            grau: '2',
+            orgaoJulgador: '',
+            ojDetectada: 'OJ não encontrada para o código: ' + codigoOJ
+          };
+          setOjData(notFoundData);
+          return notFoundData;
+        }
       } else {
         // Lógica original quando não há grau selecionado
         // Buscar nos OJs do 1º grau primeiro
