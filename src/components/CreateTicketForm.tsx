@@ -59,7 +59,12 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ editingTicket, onTi
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <BasicInfoSection
-            formData={formData}
+            formData={{
+              chamadoOrigem: formData.chamadoOrigem,
+              grau: formData.grau,
+              numeroProcesso: formData.numeroProcesso,
+              ojDetectada: formData.ojDetectada
+            }}
             onFormDataChange={handleFormDataChange}
             onProcessoChange={handleProcessoChange}
             onGrauChange={handleGrauChange}
