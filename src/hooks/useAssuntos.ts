@@ -20,13 +20,6 @@ export const useAssuntos = () => {
         setLoading(true);
         setError(null);
         
-        // Primeiro, vamos verificar se a tabela existe
-        const { data: tableData, error: tableError } = await supabase
-          .from('assuntos')
-          .select('count(*)', { count: 'exact', head: true });
-
-        console.log('Verificação da tabela assuntos:', { tableData, tableError });
-
         const { data, error } = await supabase
           .from('assuntos')
           .select('id, nome, categoria')
@@ -49,18 +42,20 @@ export const useAssuntos = () => {
         }
         
         if (data && data.length > 0) {
+          console.log('✅ Assuntos carregados com sucesso!');
           console.log('Primeiros 3 assuntos:', data.slice(0, 3));
+          setAssuntos(data);
         } else {
-          console.warn('ATENÇÃO: Nenhum assunto encontrado na base de dados!');
+          console.warn('⚠️ ATENÇÃO: Nenhum assunto encontrado na base de dados!');
+          setAssuntos([]);
         }
-        
-        setAssuntos(data || []);
       } catch (err: any) {
         console.error('=== ERRO NA BUSCA DE ASSUNTOS ===');
         console.error('Erro capturado:', err);
         console.error('Tipo do erro:', typeof err);
         console.error('Stack trace:', err.stack);
         setError('Erro ao carregar assuntos: ' + (err.message || err.toString()));
+        setAssuntos([]);
       } finally {
         setLoading(false);
         console.log('=== FIM DA BUSCA DE ASSUNTOS ===');
