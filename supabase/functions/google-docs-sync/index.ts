@@ -18,6 +18,7 @@ serve(async (req) => {
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
     
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Configurações do Supabase não encontradas');
@@ -25,7 +26,51 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    if (action === 'check_config') {
+      if (!googleClientId) {
+        return new Response(JSON.stringify({
+          error: 'Google Client ID não configurado'
+        }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        configured: true
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'get_auth_url') {
+      if (!googleClientId) {
+        throw new Error('Google Client ID não configurado');
+      }
+
+      const redirectUri = `${supabaseUrl.replace('.supabase.co', '.supabase.co')}`;
+      const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${googleClientId}&` +
+        `redirect_uri=${redirectUri}&` +
+        `response_type=token&` +
+        `scope=${encodeURIComponent(scope)}`;
+
+      return new Response(JSON.stringify({
+        success: true,
+        authUrl: authUrl
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     if (action === 'sync_docs') {
+      if (!googleClientId) {
+        throw new Error('Google Client ID não configurado');
+      }
+
       console.log('Iniciando sincronização dos Google Docs...');
       
       // Listar documentos do Google Drive (apenas Google Docs)
