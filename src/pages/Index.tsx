@@ -10,6 +10,7 @@ import RecentTickets from "@/components/RecentTickets";
 import KnowledgeBase from "@/components/KnowledgeBase";
 import Reports from "@/components/Reports";
 import UserMenu from "@/components/UserMenu";
+import AuthPage from "@/components/AuthPage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTickets } from "@/hooks/useTickets";
 
@@ -32,10 +33,27 @@ interface Ticket {
 }
 
 const Index = () => {
-  const { user } = useAuth();
-  const { tickets, loading, stats, searchTerm, setSearchTerm, deleteTicket } = useTickets();
+  const { user, loading } = useAuth();
+  const { tickets, loading: ticketsLoading, stats, searchTerm, setSearchTerm, deleteTicket } = useTickets();
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const navigate = useNavigate();
+
+  // Mostrar loading enquanto verifica autenticação
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Se não estiver logado, mostrar página de autenticação
+  if (!user) {
+    return <AuthPage />;
+  }
 
   const handleEditTicket = (ticket: Ticket) => {
     setEditingTicket(ticket);
@@ -90,7 +108,7 @@ const Index = () => {
                 <CreateTicketForm />
                 <RecentTickets 
                   tickets={tickets}
-                  loading={loading}
+                  loading={ticketsLoading}
                   searchTerm={searchTerm}
                   onSearchChange={setSearchTerm}
                   onEditTicket={handleEditTicket}

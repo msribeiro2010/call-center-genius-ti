@@ -14,9 +14,16 @@ export const useAuth = () => {
     // Configurar listener de mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state change:', event, session);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
+        if (event === 'SIGNED_OUT') {
+          setSession(null);
+          setUser(null);
+        }
       }
     );
 
@@ -109,15 +116,39 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      toast({
-        title: "Erro",
-        description: error.message,
-        variant: "destructive"
-      });
+    console.log('Fazendo logout...');
+    
+    try {
+      // Limpar o estado local imediatamente
+      setUser(null);
+      setSession(null);
+      
+      // Fazer logout no Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Erro no logout:', error);
+        toast({
+          title: "Erro",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        console.log('Logout realizado com sucesso');
+        toast({
+          title: "Logout realizado",
+          description: "Você foi desconectado com sucesso",
+        });
+      }
+      
+      return { error };
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err);
+      // Mesmo com erro, limpar o estado local
+      setUser(null);
+      setSession(null);
+      return { error: err };
     }
-    return { error };
   };
 
   return {
