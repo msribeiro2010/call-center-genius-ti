@@ -151,35 +151,35 @@ const ChatBot = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <Card className="h-[700px] flex flex-col shadow-lg border-blue-200">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-6 w-6" />
+    <div className="w-full max-w-6xl mx-auto px-4 sm:px-6">
+      <Card className="h-[80vh] max-h-[700px] min-h-[500px] flex flex-col shadow-lg border-blue-200 w-full">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg flex-shrink-0">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
             ChatBot PJe TRT15
           </CardTitle>
-          <p className="text-blue-100 text-sm flex items-center gap-4">
+          <p className="text-blue-100 text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
             <span className="flex items-center gap-1">
-              <Database className="h-4 w-4" />
+              <Database className="h-3 w-3 sm:h-4 sm:w-4" />
               Base de Conhecimento
             </span>
             <span className="flex items-center gap-1">
-              <BookOpen className="h-4 w-4" />
+              <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
               IA Hugging Face
             </span>
           </p>
         </CardHeader>
         
-        <CardContent className="flex-1 flex flex-col p-0">
-          <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+        <CardContent className="flex-1 flex flex-col p-0 min-h-0">
+          <ScrollArea className="flex-1 p-3 sm:p-4">
+            <div className="space-y-3 sm:space-y-4">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-lg p-3 ${
+                    className={`max-w-[85%] sm:max-w-[80%] rounded-lg p-2 sm:p-3 ${
                       message.sender === 'user'
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-900 border'
@@ -187,13 +187,13 @@ const ChatBot = () => {
                   >
                     <div className="flex items-start gap-2">
                       {message.sender === 'bot' && (
-                        <Bot className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                       )}
                       {message.sender === 'user' && (
-                        <User className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
+                        <User className="h-4 w-4 sm:h-5 sm:w-5 text-white mt-0.5 flex-shrink-0" />
                       )}
-                      <div className="flex-1">
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                      <div className="flex-1 min-w-0">
+                        <p className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed break-words">
                           {message.text}
                         </p>
                         {message.sources && (
@@ -217,11 +217,11 @@ const ChatBot = () => {
               
               {isLoading && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 border rounded-lg p-3 max-w-[80%]">
+                  <div className="bg-gray-100 border rounded-lg p-2 sm:p-3 max-w-[85%] sm:max-w-[80%]">
                     <div className="flex items-center gap-2">
-                      <Bot className="h-5 w-5 text-blue-600" />
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                      <span className="text-sm text-gray-600">Consultando base de conhecimento e processando com IA...</span>
+                      <Bot className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                      <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin text-blue-600" />
+                      <span className="text-xs sm:text-sm text-gray-600">Consultando base de conhecimento e processando com IA...</span>
                     </div>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ const ChatBot = () => {
             <div ref={messagesEndRef} />
           </ScrollArea>
           
-          <div className="border-t p-4 bg-gray-50">
+          <div className="border-t p-3 sm:p-4 bg-gray-50 flex-shrink-0">
             <div className="flex gap-2">
               <Input
                 value={inputMessage}
@@ -238,14 +238,15 @@ const ChatBot = () => {
                 onKeyPress={handleKeyPress}
                 placeholder="Digite sua pergunta sobre o PJe..."
                 disabled={isLoading}
-                className="flex-1"
+                className="flex-1 text-sm"
               />
               <Button 
                 onClick={sendMessage}
                 disabled={isLoading || !inputMessage.trim()}
-                className="bg-blue-600 hover:bg-blue-700"
+                className="bg-blue-600 hover:bg-blue-700 flex-shrink-0"
+                size="sm"
               >
-                <Send className="h-4 w-4" />
+                <Send className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
