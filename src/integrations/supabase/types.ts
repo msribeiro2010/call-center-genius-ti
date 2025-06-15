@@ -60,6 +60,30 @@ export type Database = {
         }
         Relationships: []
       }
+      assuntos_base_conhecimento: {
+        Row: {
+          categoria: string | null
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       base_conhecimento: {
         Row: {
           arquivo_print: string | null

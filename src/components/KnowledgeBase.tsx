@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Search, Plus, Eye, ThumbsUp, FileText, Upload, ExternalLink } from 'lucide-react';
+import { Search, Plus, Eye, ThumbsUp, FileText, Upload, ExternalLink, Settings } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +12,8 @@ import KnowledgeCreateModal from './KnowledgeCreateModal';
 import KnowledgeSolutionModal from './KnowledgeSolutionModal';
 import KnowledgeItemCard from './KnowledgeItemCard';
 import BulkKnowledgeUpload from './BulkKnowledgeUpload';
+import KnowledgeSubjectManager from './KnowledgeSubjectManager';
+import { useAdmin } from '@/hooks/useAdmin';
 
 interface KnowledgeItem {
   id: string;
@@ -35,6 +36,7 @@ const KnowledgeBase = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const [showSubjectManager, setShowSubjectManager] = useState(false);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
@@ -46,6 +48,7 @@ const KnowledgeBase = () => {
   });
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -206,6 +209,16 @@ const KnowledgeBase = () => {
           <p className="text-gray-600">Documentações e soluções para problemas comuns</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isAdmin && (
+            <Button
+              onClick={() => setShowSubjectManager(!showSubjectManager)}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Gerenciar Assuntos
+            </Button>
+          )}
           <Button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
             variant="outline"
@@ -232,6 +245,10 @@ const KnowledgeBase = () => {
           </Button>
         </div>
       </div>
+
+      {showSubjectManager && isAdmin && (
+        <KnowledgeSubjectManager />
+      )}
 
       {showBulkUpload && (
         <BulkKnowledgeUpload />
