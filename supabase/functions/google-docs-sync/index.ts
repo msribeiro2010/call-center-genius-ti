@@ -50,8 +50,8 @@ serve(async (req) => {
         throw new Error('Google Client ID não configurado');
       }
 
-      // Usar redirect_uri simples para popup
-      const redirectUri = `${supabaseUrl}/functions/v1/google-docs-sync`;
+      // Usar a URI de callback configurada no Google Cloud Console
+      const redirectUri = `${supabaseUrl}/auth/v1/callback`;
       const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
