@@ -97,7 +97,7 @@ serve(async (req) => {
     try {
       const { data: chamadosData, error: chamadosError } = await supabase
         .from('chamados')
-        .select('titulo, descricao, status, tipo, prioridade')
+        .select('id, titulo, descricao, status, tipo, prioridade')
         .or(`titulo.ilike.%${message}%,descricao.ilike.%${message}%`)
         .order('created_at', { ascending: false })
         .limit(10);
@@ -125,6 +125,7 @@ serve(async (req) => {
         categoria: item.categoria
       })),
       chamadosSimilares: chamados.map(item => ({
+        id: item.id,
         titulo: item.titulo,
         descricao: item.descricao,
         status: item.status,
@@ -205,17 +206,29 @@ Responda de forma técnica mas didática, forneça passos práticos quando poss�
 ${contextoFormatado.assuntos.length > 0 ? 
   `\n**Assuntos relacionados:** ${contextoFormatado.assuntos.slice(0, 3).map(a => a.nome).join(', ')}` : ''}
 
-Se esta solução não resolver seu problema, por favor reformule sua pergunta ou entre em contato com o suporte técnico.`;
+Se esta solução não resolver seu problema, por favor reformule sua pergunta ou abra um chamado para assistência personalizada.`;
       } else {
-        botResponse = `Não encontrei uma solução específica na nossa base de conhecimento para: "${message}"
+        // Resposta quando não encontra solução específica
+        let fallbackResponse = `Não encontrei uma solução específica na nossa base de conhecimento para: "${message}"
 
 **Sugestões:**
 • Tente reformular sua pergunta usando termos mais específicos
 • Verifique se o problema está relacionado a: login, assinatura digital, movimentação processual, ou erro de sistema
-• Entre em contato com o suporte técnico para assistência personalizada
+• Abra um chamado para assistência personalizada
 
 ${contextoFormatado.assuntos.length > 0 ? 
   `**Assuntos que podem estar relacionados:** ${contextoFormatado.assuntos.slice(0, 5).map(a => a.nome).join(', ')}` : ''}`;
+
+        // Adicionar números de chamados similares se houver
+        if (contextoFormatado.chamadosSimilares.length > 0) {
+          fallbackResponse += `\n\n**Chamados similares já cadastrados:**`;
+          contextoFormatado.chamadosSimilares.slice(0, 3).forEach((chamado, index) => {
+            fallbackResponse += `\n${index + 1}. Chamado ID: \`${chamado.id}\` - ${chamado.titulo} (Status: ${chamado.status})`;
+          });
+          fallbackResponse += `\n\n*Você pode usar estes números de chamado como referência.*`;
+        }
+
+        botResponse = fallbackResponse;
       }
     } else {
       const data = await response.json();
@@ -245,27 +258,49 @@ ${contextoFormatado.assuntos.length > 0 ?
 
 **Categoria:** ${melhorSolucao.categoria}`;
         } else {
-          botResponse = `Consultei nossa base de conhecimento mas não encontrei uma solução específica para "${message}". 
+          let fallbackResponse = `Consultei nossa base de conhecimento mas não encontrei uma solução específica para "${message}". 
 
 **Dicas:**
 • Reformule sua pergunta com mais detalhes
 • Mencione mensagens de erro específicas
 • Descreva os passos que levaram ao problema
 
-Entre em contato com o suporte técnico se precisar de assistência adicional.`;
+Abra um chamado se precisar de assistência adicional.`;
+
+          // Adicionar números de chamados similares se houver
+          if (contextoFormatado.chamadosSimilares.length > 0) {
+            fallbackResponse += `\n\n**Chamados similares já cadastrados:**`;
+            contextoFormatado.chamadosSimilares.slice(0, 3).forEach((chamado, index) => {
+              fallbackResponse += `\n${index + 1}. Chamado ID: \`${chamado.id}\` - ${chamado.titulo} (Status: ${chamado.status})`;
+            });
+            fallbackResponse += `\n\n*Você pode usar estes números de chamado como referência.*`;
+          }
+
+          botResponse = fallbackResponse;
         }
       }
     }
 
     // Garantir que sempre temos uma resposta válida
     if (!botResponse || botResponse.trim() === '') {
-      botResponse = `Consultei nossa base de conhecimento e encontrei ${contextoFormatado.baseConhecimento.length} itens relacionados ao seu problema.
+      let finalResponse = `Consultei nossa base de conhecimento e encontrei ${contextoFormatado.baseConhecimento.length} itens relacionados ao seu problema.
 
 ${contextoFormatado.baseConhecimento.length > 0 ? 
   `**Solução sugerida:** ${contextoFormatado.baseConhecimento[0].solucao}` : 
   'Não encontrei soluções específicas na base de conhecimento.'}
 
-Para uma resposta mais precisa, reformule sua pergunta ou entre em contato com o suporte técnico.`;
+Para uma resposta mais precisa, reformule sua pergunta ou abra um chamado para assistência personalizada.`;
+
+      // Adicionar números de chamados similares se houver
+      if (contextoFormatado.chamadosSimilares.length > 0) {
+        finalResponse += `\n\n**Chamados similares já cadastrados:**`;
+        contextoFormatado.chamadosSimilares.slice(0, 3).forEach((chamado, index) => {
+          finalResponse += `\n${index + 1}. Chamado ID: \`${chamado.id}\` - ${chamado.titulo} (Status: ${chamado.status})`;
+        });
+        finalResponse += `\n\n*Você pode usar estes números de chamado como referência.*`;
+      }
+
+      botResponse = finalResponse;
     }
 
     console.log('Resposta processada com sucesso');
@@ -276,7 +311,8 @@ Para uma resposta mais precisa, reformule sua pergunta ou entre em contato com o
         knowledgeBaseCount: contextoFormatado.baseConhecimento.length,
         assuntosCount: contextoFormatado.assuntos.length,
         chamadosCount: contextoFormatado.chamadosSimilares.length
-      }
+      },
+      similarTickets: contextoFormatado.chamadosSimilares.slice(0, 3)
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
