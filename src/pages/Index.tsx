@@ -13,6 +13,7 @@ import UserMenu from "@/components/UserMenu";
 import AuthPage from "@/components/AuthPage";
 import { useAuth } from "@/hooks/useAuth";
 import { useTickets } from "@/hooks/useTickets";
+import { useAdmin } from "@/hooks/useAdmin";
 
 interface Ticket {
   id: string;
@@ -35,6 +36,7 @@ interface Ticket {
 const Index = () => {
   const { user, loading } = useAuth();
   const { tickets, loading: ticketsLoading, stats, searchTerm, setSearchTerm, deleteTicket } = useTickets();
+  const { isAdmin } = useAdmin();
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const navigate = useNavigate();
 
@@ -99,9 +101,10 @@ const Index = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          <StatsCards stats={stats} />
+          {/* Mostrar StatsCards apenas para administradores */}
+          {isAdmin && <StatsCards stats={stats} />}
           
-          <Tabs defaultValue="tickets" className="mt-6">
+          <Tabs defaultValue="tickets" className={isAdmin ? "mt-6" : ""}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="tickets">Chamados</TabsTrigger>
               <TabsTrigger value="knowledge">Base de Conhecimento</TabsTrigger>
