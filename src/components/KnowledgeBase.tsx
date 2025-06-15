@@ -18,12 +18,13 @@ interface KnowledgeItem {
   titulo: string;
   problema_descricao: string;
   solucao: string;
-  categoria?: string;
-  tags?: string[];
-  visualizacoes?: number;
-  util_count?: number;
+  categoria: string;
+  tags: string[];
+  visualizacoes: number;
+  util_count: number;
   created_at: string;
   updated_at: string;
+  arquivo_print?: string;
 }
 
 const KnowledgeBase = () => {
@@ -33,6 +34,14 @@ const KnowledgeBase = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
+  const [formData, setFormData] = useState({
+    titulo: '',
+    problema_descricao: '',
+    solucao: '',
+    categoria: '',
+    tags: '',
+    arquivo_print: ''
+  });
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -57,7 +66,14 @@ const KnowledgeBase = () => {
           variant: "destructive"
         });
       } else {
-        setItems(data || []);
+        const formattedData = data?.map(item => ({
+          ...item,
+          categoria: item.categoria || '',
+          tags: item.tags || [],
+          visualizacoes: item.visualizacoes || 0,
+          util_count: item.util_count || 0
+        })) || [];
+        setItems(formattedData);
       }
     } finally {
       setLoading(false);
@@ -115,6 +131,59 @@ const KnowledgeBase = () => {
     } catch (error) {
       console.error('Erro ao processar voto:', error);
     }
+  };
+
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const { data, error } = await supabase
+        .from('base_conhecimento')
+        .insert([{
+          titulo: formData.titulo,
+          problema_descricao: formData.problema_descricao,
+          solucao: formData.solucao,
+          categoria: formData.categoria,
+          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+          arquivo_print: formData.arquivo_print
+        }])
+        .select();
+
+      if (error) {
+        console.error('Erro ao criar item:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao criar item na base de conhecimento",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Item criado com sucesso!",
+        });
+        setFormData({
+          titulo: '',
+          problema_descricao: '',
+          solucao: '',
+          categoria: '',
+          tags: '',
+          arquivo_print: ''
+        });
+        setIsCreateModalOpen(false);
+        fetchKnowledgeItems();
+      }
+    } catch (error) {
+      console.error('Erro ao criar item:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar item",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMarkUseful = async (item: KnowledgeItem) => {
+    handleVote(item, true);
   };
 
   const categories = ['all', ...new Set(items.map(item => item.categoria).filter(Boolean))];
@@ -187,8 +256,7 @@ const KnowledgeBase = () => {
             <KnowledgeItemCard
               key={item.id}
               item={item}
-              onOpenSolution={() => handleOpenSolution(item)}
-              onVote={handleVote}
+              onViewSolution={() => handleOpenSolution(item)}
             />
           ))}
         </div>
@@ -196,15 +264,19 @@ const KnowledgeBase = () => {
 
       {isCreateModalOpen && (
         <KnowledgeCreateModal
+          showCreateForm={isCreateModalOpen}
+          formData={formData}
+          setFormData={setFormData}
+          onSubmit={handleCreateSubmit}
           onClose={() => setIsCreateModalOpen(false)}
-          onItemCreated={fetchKnowledgeItems}
         />
       )}
 
       {selectedItem && (
         <KnowledgeSolutionModal
-          item={selectedItem}
+          selectedItem={selectedItem}
           onClose={handleCloseSolution}
+          onMarkUseful={handleMarkUseful}
         />
       )}
     </div>
