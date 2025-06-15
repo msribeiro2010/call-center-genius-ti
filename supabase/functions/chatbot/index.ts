@@ -15,67 +15,118 @@ serve(async (req) => {
   }
 
   try {
-    const { message } = await req.json();
+    console.log('Iniciando processamento do chatbot...');
+    
+    const requestBody = await req.json();
+    console.log('Corpo da requisição:', requestBody);
+    
+    const { message } = requestBody;
     
     if (!message) {
+      console.error('Mensagem não fornecida');
       throw new Error('Mensagem é obrigatória');
     }
 
+    console.log('Mensagem recebida:', message);
+
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY');
+    
+    console.log('Configurações Supabase:', {
+      url: supabaseUrl ? 'definida' : 'não definida',
+      key: supabaseKey ? 'definida' : 'não definida'
+    });
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Configurações do Supabase não encontradas');
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Buscando dados da base de conhecimento...');
     
-    // Buscar base de conhecimento
-    const { data: knowledgeBase, error: kbError } = await supabase
-      .from('base_conhecimento')
-      .select('titulo, problema_descricao, solucao, categoria, tags')
-      .limit(20);
+    // Buscar base de conhecimento com tratamento de erro melhorado
+    let knowledgeBase = [];
+    try {
+      const { data: kbData, error: kbError } = await supabase
+        .from('base_conhecimento')
+        .select('titulo, problema_descricao, solucao, categoria, tags')
+        .limit(20);
 
-    if (kbError) {
-      console.error('Erro ao buscar base de conhecimento:', kbError);
+      if (kbError) {
+        console.error('Erro ao buscar base de conhecimento:', kbError);
+      } else {
+        knowledgeBase = kbData || [];
+        console.log('Base de conhecimento encontrada:', knowledgeBase.length, 'itens');
+      }
+    } catch (error) {
+      console.error('Erro inesperado na base de conhecimento:', error);
     }
 
     console.log('Buscando assuntos...');
     
-    // Buscar assuntos
-    const { data: assuntos, error: assuntosError } = await supabase
-      .from('assuntos')
-      .select('nome, categoria')
-      .limit(50);
+    // Buscar assuntos com tratamento de erro melhorado
+    let assuntos = [];
+    try {
+      const { data: assuntosData, error: assuntosError } = await supabase
+        .from('assuntos')
+        .select('nome, categoria')
+        .limit(50);
 
-    if (assuntosError) {
-      console.error('Erro ao buscar assuntos:', assuntosError);
+      if (assuntosError) {
+        console.error('Erro ao buscar assuntos:', assuntosError);
+      } else {
+        assuntos = assuntosData || [];
+        console.log('Assuntos encontrados:', assuntos.length, 'itens');
+      }
+    } catch (error) {
+      console.error('Erro inesperado nos assuntos:', error);
     }
 
     console.log('Buscando chamados recentes...');
     
-    // Buscar chamados recentes (últimos 20)
-    const { data: chamados, error: chamadosError } = await supabase
-      .from('chamados')
-      .select('titulo, descricao, status, tipo, prioridade')
-      .order('created_at', { ascending: false })
-      .limit(20);
+    // Buscar chamados recentes com tratamento de erro melhorado
+    let chamados = [];
+    try {
+      const { data: chamadosData, error: chamadosError } = await supabase
+        .from('chamados')
+        .select('titulo, descricao, status, tipo, prioridade')
+        .order('created_at', { ascending: false })
+        .limit(20);
 
-    if (chamadosError) {
-      console.error('Erro ao buscar chamados:', chamadosError);
+      if (chamadosError) {
+        console.error('Erro ao buscar chamados:', chamadosError);
+      } else {
+        chamados = chamadosData || [];
+        console.log('Chamados encontrados:', chamados.length, 'itens');
+      }
+    } catch (error) {
+      console.error('Erro inesperado nos chamados:', error);
     }
 
     // Preparar contexto para a IA
     const contexto = {
-      baseConhecimento: knowledgeBase || [],
-      assuntos: assuntos || [],
-      chamados: chamados || []
+      baseConhecimento: knowledgeBase,
+      assuntos: assuntos,
+      chamados: chamados
     };
 
-    console.log('Enviando para OpenAI...');
+    console.log('Contexto preparado:', {
+      baseConhecimento: contexto.baseConhecimento.length,
+      assuntos: contexto.assuntos.length,
+      chamados: contexto.chamados.length
+    });
 
+    console.log('Verificando chave da OpenAI...');
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    
     if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY não configurada');
+      console.error('OPENAI_API_KEY não configurada');
+      throw new Error('Chave da API OpenAI não configurada. Entre em contato com o administrador.');
     }
+
+    console.log('Chave OpenAI encontrada, enviando requisição...');
 
     const systemPrompt = `Você é um assistente especializado em suporte técnico do sistema PJe (Processo Judicial Eletrônico) do TRT15. 
 
@@ -116,16 +167,25 @@ FORMATO DE RESPOSTA:
       }),
     });
 
+    console.log('Status da resposta OpenAI:', response.status);
+
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro da OpenAI:', errorText);
-      throw new Error(`Erro da OpenAI: ${response.status}`);
+      console.error('Erro da OpenAI - Status:', response.status, 'Resposta:', errorText);
+      throw new Error(`Erro da API OpenAI: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    const botResponse = data.choices[0].message.content;
+    console.log('Resposta da OpenAI recebida com sucesso');
+    
+    const botResponse = data.choices?.[0]?.message?.content;
+    
+    if (!botResponse) {
+      console.error('Resposta vazia da OpenAI:', data);
+      throw new Error('Resposta vazia da OpenAI');
+    }
 
-    console.log('Resposta gerada com sucesso');
+    console.log('Resposta processada com sucesso');
 
     return new Response(JSON.stringify({ 
       response: botResponse,
@@ -140,8 +200,13 @@ FORMATO DE RESPOSTA:
 
   } catch (error) {
     console.error('Erro no chatbot:', error);
+    
+    // Retornar erro mais específico
+    const errorMessage = error.message || 'Erro interno do servidor';
+    
     return new Response(JSON.stringify({ 
-      error: error.message || 'Erro interno do servidor' 
+      error: errorMessage,
+      details: error.stack || 'Sem detalhes adicionais'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

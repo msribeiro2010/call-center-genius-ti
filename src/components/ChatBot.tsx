@@ -53,16 +53,36 @@ const ChatBot = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentMessage = inputMessage;
     setInputMessage('');
     setIsLoading(true);
 
     try {
+      console.log('Enviando mensagem para o chatbot:', currentMessage);
+      
       const { data, error } = await supabase.functions.invoke('chatbot', {
-        body: { message: inputMessage }
+        body: { message: currentMessage }
       });
 
+      console.log('Resposta do chatbot:', { data, error });
+
       if (error) {
-        throw error;
+        console.error('Erro do Supabase Functions:', error);
+        throw new Error(`Erro da função: ${error.message || 'Erro desconhecido'}`);
+      }
+
+      if (!data) {
+        throw new Error('Resposta vazia da função');
+      }
+
+      if (data.error) {
+        console.error('Erro retornado pela função:', data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data.response) {
+        console.error('Resposta da IA não encontrada:', data);
+        throw new Error('Resposta da IA não encontrada');
       }
 
       const botMessage: Message = {
@@ -75,21 +95,40 @@ const ChatBot = () => {
 
       setMessages(prev => [...prev, botMessage]);
 
+      toast({
+        title: "Mensagem enviada",
+        description: "Resposta recebida com sucesso",
+      });
+
     } catch (error) {
-      console.error('Erro ao enviar mensagem:', error);
+      console.error('Erro detalhado ao enviar mensagem:', error);
       
-      const errorMessage: Message = {
+      let errorMessage = 'Ocorreu um erro inesperado. Tente novamente.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('OPENAI_API_KEY')) {
+          errorMessage = 'Configuração da IA não encontrada. Entre em contato com o administrador.';
+        } else if (error.message.includes('função')) {
+          errorMessage = 'Erro no processamento da mensagem. Verifique sua conexão.';
+        } else if (error.message.includes('Resposta vazia')) {
+          errorMessage = 'Não foi possível obter uma resposta. Tente reformular sua pergunta.';
+        } else {
+          errorMessage = `Erro: ${error.message}`;
+        }
+      }
+      
+      const errorBotMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente ou entre em contato com o suporte técnico.',
+        text: errorMessage,
         sender: 'bot',
         timestamp: new Date()
       };
 
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages(prev => [...prev, errorBotMessage]);
       
       toast({
         title: "Erro no ChatBot",
-        description: "Não foi possível processar sua mensagem",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -173,7 +212,7 @@ const ChatBot = () => {
                     <div className="flex items-center gap-2">
                       <Bot className="h-5 w-5 text-blue-600" />
                       <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                      <span className="text-sm text-gray-600">Processando...</span>
+                      <span className="text-sm text-gray-600">Processando sua mensagem...</span>
                     </div>
                   </div>
                 </div>
