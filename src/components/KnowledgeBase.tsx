@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -193,15 +194,15 @@ const KnowledgeBase = () => {
         </div>
       )}
 
-      <KnowledgeCreateModal
-        isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onItemCreated={fetchKnowledgeItems}
-      />
+      {isCreateModalOpen && (
+        <KnowledgeCreateModal
+          onClose={() => setIsCreateModalOpen(false)}
+          onItemCreated={fetchKnowledgeItems}
+        />
+      )}
 
       {selectedItem && (
         <KnowledgeSolutionModal
-          isOpen={true}
           item={selectedItem}
           onClose={handleCloseSolution}
         />
