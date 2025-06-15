@@ -4,6 +4,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Input } from '../ui/input';
 import { Settings } from 'lucide-react';
+import OrgaoJulgadorSelect from '../OrgaoJulgadorSelect';
 
 interface AdvancedSettingsSectionProps {
   formData: {
@@ -21,6 +22,10 @@ const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = ({
   onFormDataChange,
   grau
 }) => {
+  const handleOJDetected = (ojNome: string) => {
+    onFormDataChange('ojDetectada', ojNome);
+  };
+
   return (
     <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
       <div className="flex items-center gap-2 mb-6">
@@ -30,13 +35,14 @@ const AdvancedSettingsSection: React.FC<AdvancedSettingsSectionProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
-          <Label htmlFor="orgaoJulgador" className="text-sm font-medium text-gray-700">Órgão Julgador</Label>
-          <Input
-            id="orgaoJulgador"
+          <Label htmlFor="orgaoJulgador" className="text-sm font-medium text-gray-700">
+            Órgão Julgador
+          </Label>
+          <OrgaoJulgadorSelect
+            grau={grau}
             value={formData.orgaoJulgador}
-            onChange={(e) => onFormDataChange('orgaoJulgador', e.target.value)}
-            placeholder="Código do órgão julgador"
-            className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+            onValueChange={(value) => onFormDataChange('orgaoJulgador', value)}
+            onOJDetected={handleOJDetected}
           />
         </div>
 
