@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import KnowledgeCreateModal from './KnowledgeCreateModal';
 import KnowledgeSolutionModal from './KnowledgeSolutionModal';
 import KnowledgeItemCard from './KnowledgeItemCard';
+import BulkKnowledgeUpload from './BulkKnowledgeUpload';
 
 interface KnowledgeItem {
   id: string;
@@ -33,6 +34,7 @@ const KnowledgeBase = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
@@ -205,6 +207,14 @@ const KnowledgeBase = () => {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
+            onClick={() => setShowBulkUpload(!showBulkUpload)}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Upload em Lote
+          </Button>
+          <Button
             onClick={() => navigate('/google-docs-sync')}
             variant="outline"
             className="flex items-center gap-2"
@@ -222,6 +232,10 @@ const KnowledgeBase = () => {
           </Button>
         </div>
       </div>
+
+      {showBulkUpload && (
+        <BulkKnowledgeUpload />
+      )}
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <Input
