@@ -89,6 +89,15 @@ const TicketDetailsModal: React.FC<TicketDetailsModalProps> = ({
               <span className="font-medium text-gray-600">Usuário Afetado:</span>
               <span className="text-right max-w-[300px] break-words">{formatUsuarioAfetado()}</span>
             </div>
+
+            {ticket.descricao && (
+              <div className="flex flex-col space-y-2">
+                <span className="font-medium text-gray-600">Descrição do Problema:</span>
+                <div className="bg-gray-50 p-3 rounded-lg border">
+                  <p className="text-gray-700 whitespace-pre-wrap text-sm">{ticket.descricao}</p>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </DialogContent>
