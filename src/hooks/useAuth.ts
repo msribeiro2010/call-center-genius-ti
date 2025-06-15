@@ -17,21 +17,53 @@ export const useAuth = () => {
 
     const initializeAuth = async () => {
       try {
-        // Verificar sessão existente primeiro
+        // Configurar listener de mudanças de autenticação PRIMEIRO
+        console.log('Configurando listener de auth...');
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event, session) => {
+            console.log('Auth state change:', event, session ? 'Logado' : 'Não logado');
+            
+            if (mounted) {
+              setSession(session);
+              setUser(session?.user ?? null);
+              
+              // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
+              if (event === 'SIGNED_OUT') {
+                setSession(null);
+                setUser(null);
+              }
+              
+              // Marcar loading como false apenas após o primeiro evento
+              if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+                setLoading(false);
+              }
+            }
+          }
+        );
+
+        // Verificar sessão existente
         console.log('Verificando sessão existente...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Erro ao obter sessão:', error);
+          if (mounted) {
+            setLoading(false);
+          }
         } else {
           console.log('Sessão obtida:', session ? 'Logado' : 'Não logado');
+          
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+          }
         }
 
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
+        return () => {
+          mounted = false;
+          subscription.unsubscribe();
+        };
       } catch (error) {
         console.error('Erro na inicialização da auth:', error);
         if (mounted) {
@@ -40,32 +72,12 @@ export const useAuth = () => {
       }
     };
 
-    // Configurar listener de mudanças de autenticação
-    console.log('Configurando listener de auth...');
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event, session ? 'Logado' : 'Não logado');
-        
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-          
-          // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
-          if (event === 'SIGNED_OUT') {
-            setSession(null);
-            setUser(null);
-          }
-        }
-      }
-    );
-
     // Inicializar
-    initializeAuth();
+    const cleanup = initializeAuth();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      cleanup?.then(fn => fn?.());
     };
   }, []);
 
@@ -109,12 +121,15 @@ export const useAuth = () => {
   };
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
     if (error) {
+      setLoading(false);
       toast({
         title: "Erro no login",
         description: error.message,
@@ -126,6 +141,8 @@ export const useAuth = () => {
   };
 
   const signInWithGoogle = async () => {
+    setLoading(true);
+    
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -137,6 +154,7 @@ export const useAuth = () => {
     });
 
     if (error) {
+      setLoading(false);
       toast({
         title: "Erro no login",
         description: error.message,
@@ -151,6 +169,8 @@ export const useAuth = () => {
     console.log('Fazendo logout...');
     
     try {
+      setLoading(true);
+      
       // Fazer logout no Supabase PRIMEIRO
       const { error } = await supabase.auth.signOut({
         scope: 'global' // Força logout em todas as sessões
@@ -158,6 +178,7 @@ export const useAuth = () => {
       
       if (error) {
         console.error('Erro no logout:', error);
+        setLoading(false);
         toast({
           title: "Erro",
           description: error.message,
@@ -169,8 +190,12 @@ export const useAuth = () => {
       // Limpar estado local após sucesso
       setUser(null);
       setSession(null);
+      setLoading(false);
       
       console.log('Logout realizado com sucesso');
+      
+      // Limpar localStorage como precaução adicional
+      localStorage.removeItem('supabase.auth.token');
       
       // Forçar recarregamento da página para garantir limpeza completa
       setTimeout(() => {
@@ -189,6 +214,10 @@ export const useAuth = () => {
       // Em caso de erro, ainda assim limpar o estado local e recarregar
       setUser(null);
       setSession(null);
+      setLoading(false);
+      
+      // Limpar localStorage como precaução adicional
+      localStorage.removeItem('supabase.auth.token');
       
       setTimeout(() => {
         window.location.href = '/';
