@@ -1,9 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
-import { Send, Bot, User, Loader2, MessageCircle } from 'lucide-react';
+import { Send, Bot, User, Loader2, MessageCircle, Database, BookOpen } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 
@@ -23,7 +24,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Olá! Sou o assistente virtual do PJe TRT15 alimentado por IA do Hugging Face. Posso ajudar você com problemas técnicos, dúvidas sobre o sistema e sugerir soluções baseadas na nossa base de conhecimento. Como posso ajudar?',
+      text: 'Olá! Sou o assistente virtual do PJe TRT15 alimentado pela nossa base de conhecimento e IA do Hugging Face. \n\nPosso ajudar você com:\n• Problemas técnicos do sistema PJe\n• Dúvidas sobre funcionalidades\n• Soluções baseadas em nossa base de conhecimento\n• Sugestões de assuntos para chamados\n\nComo posso ajudar você hoje?',
       sender: 'bot',
       timestamp: new Date()
     }
@@ -95,8 +96,8 @@ const ChatBot = () => {
       setMessages(prev => [...prev, botMessage]);
 
       toast({
-        title: "Mensagem enviada",
-        description: "Resposta recebida com sucesso",
+        title: "Resposta recebida",
+        description: `Consultei ${data.sources?.knowledgeBaseCount || 0} itens da base de conhecimento`,
       });
 
     } catch (error) {
@@ -155,10 +156,17 @@ const ChatBot = () => {
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-6 w-6" />
-            ChatBot PJe TRT15 - Powered by Hugging Face
+            ChatBot PJe TRT15
           </CardTitle>
-          <p className="text-blue-100 text-sm">
-            Assistente virtual para suporte técnico do sistema PJe usando IA do Hugging Face
+          <p className="text-blue-100 text-sm flex items-center gap-4">
+            <span className="flex items-center gap-1">
+              <Database className="h-4 w-4" />
+              Base de Conhecimento
+            </span>
+            <span className="flex items-center gap-1">
+              <BookOpen className="h-4 w-4" />
+              IA Hugging Face
+            </span>
           </p>
         </CardHeader>
         
@@ -190,9 +198,11 @@ const ChatBot = () => {
                         </p>
                         {message.sources && (
                           <div className="mt-2 text-xs text-gray-500 border-t pt-2">
-                            <p>
-                              📊 Consultei {message.sources.knowledgeBaseCount} itens da base de conhecimento, 
-                              {message.sources.assuntosCount} assuntos e {message.sources.chamadosCount} chamados recentes
+                            <p className="flex items-center gap-1">
+                              <Database className="h-3 w-3" />
+                              Consultei {message.sources.knowledgeBaseCount} itens da base de conhecimento
+                              {message.sources.assuntosCount > 0 && `, ${message.sources.assuntosCount} assuntos`}
+                              {message.sources.chamadosCount > 0 && ` e ${message.sources.chamadosCount} chamados similares`}
                             </p>
                           </div>
                         )}
@@ -211,7 +221,7 @@ const ChatBot = () => {
                     <div className="flex items-center gap-2">
                       <Bot className="h-5 w-5 text-blue-600" />
                       <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                      <span className="text-sm text-gray-600">Processando com IA do Hugging Face...</span>
+                      <span className="text-sm text-gray-600">Consultando base de conhecimento e processando com IA...</span>
                     </div>
                   </div>
                 </div>
@@ -238,8 +248,9 @@ const ChatBot = () => {
                 <Send className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-xs text-gray-500 mt-2">
-              Pressione Enter para enviar. O chatbot usa IA do Hugging Face e consulta a base de conhecimento para respostas precisas.
+            <p className="text-xs text-gray-500 mt-2 flex items-center gap-1">
+              <Database className="h-3 w-3" />
+              Pressione Enter para enviar. O chatbot consulta nossa base de conhecimento e usa IA do Hugging Face para respostas precisas.
             </p>
           </div>
         </CardContent>
