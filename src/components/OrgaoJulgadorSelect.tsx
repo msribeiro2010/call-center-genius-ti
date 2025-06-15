@@ -47,7 +47,7 @@ const OrgaoJulgadorSelect: React.FC<OrgaoJulgadorSelectProps> = ({
           <SelectValue placeholder="Selecione o grau primeiro" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Selecione o grau primeiro</SelectItem>
+          <SelectItem value="no-grau-selected">Selecione o grau primeiro</SelectItem>
         </SelectContent>
       </Select>
     );
