@@ -17,7 +17,6 @@ export const useAssuntos = () => {
     const fetchAssuntos = async () => {
       try {
         console.log('=== INÍCIO DA BUSCA DE ASSUNTOS ===');
-        console.log('Supabase URL:', supabase.supabaseUrl);
         setLoading(true);
         setError(null);
         
