@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -24,7 +23,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: 'Olá! Sou o assistente virtual do PJe TRT15. Posso ajudar você com problemas técnicos, dúvidas sobre o sistema e sugerir soluções baseadas na nossa base de conhecimento. Como posso ajudar?',
+      text: 'Olá! Sou o assistente virtual do PJe TRT15 alimentado por IA do Hugging Face. Posso ajudar você com problemas técnicos, dúvidas sobre o sistema e sugerir soluções baseadas na nossa base de conhecimento. Como posso ajudar?',
       sender: 'bot',
       timestamp: new Date()
     }
@@ -106,8 +105,8 @@ const ChatBot = () => {
       let errorMessage = 'Ocorreu um erro inesperado. Tente novamente.';
       
       if (error instanceof Error) {
-        if (error.message.includes('OPENAI_API_KEY')) {
-          errorMessage = 'Configuração da IA não encontrada. Entre em contato com o administrador.';
+        if (error.message.includes('Hugging Face')) {
+          errorMessage = 'Erro na conexão com a IA do Hugging Face. Verifique sua conexão.';
         } else if (error.message.includes('função')) {
           errorMessage = 'Erro no processamento da mensagem. Verifique sua conexão.';
         } else if (error.message.includes('Resposta vazia')) {
@@ -156,10 +155,10 @@ const ChatBot = () => {
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <MessageCircle className="h-6 w-6" />
-            ChatBot PJe TRT15
+            ChatBot PJe TRT15 - Powered by Hugging Face
           </CardTitle>
           <p className="text-blue-100 text-sm">
-            Assistente virtual para suporte técnico do sistema PJe
+            Assistente virtual para suporte técnico do sistema PJe usando IA do Hugging Face
           </p>
         </CardHeader>
         
@@ -212,7 +211,7 @@ const ChatBot = () => {
                     <div className="flex items-center gap-2">
                       <Bot className="h-5 w-5 text-blue-600" />
                       <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                      <span className="text-sm text-gray-600">Processando sua mensagem...</span>
+                      <span className="text-sm text-gray-600">Processando com IA do Hugging Face...</span>
                     </div>
                   </div>
                 </div>
@@ -240,7 +239,7 @@ const ChatBot = () => {
               </Button>
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Pressione Enter para enviar. O chatbot consulta a base de conhecimento e chamados para fornecer respostas precisas.
+              Pressione Enter para enviar. O chatbot usa IA do Hugging Face e consulta a base de conhecimento para respostas precisas.
             </p>
           </div>
         </CardContent>

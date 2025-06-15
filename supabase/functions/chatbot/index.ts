@@ -118,15 +118,10 @@ serve(async (req) => {
       chamados: contexto.chamados.length
     });
 
-    console.log('Verificando chave da OpenAI...');
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    console.log('Verificando chave do Hugging Face...');
+    const huggingFaceApiKey = "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";
     
-    if (!openAIApiKey) {
-      console.error('OPENAI_API_KEY não configurada');
-      throw new Error('Chave da API OpenAI não configurada. Entre em contato com o administrador.');
-    }
-
-    console.log('Chave OpenAI encontrada, enviando requisição...');
+    console.log('Chave Hugging Face encontrada, enviando requisição...');
 
     const systemPrompt = `Você é um assistente especializado em suporte técnico do sistema PJe (Processo Judicial Eletrônico) do TRT15. 
 
@@ -148,41 +143,67 @@ FORMATO DE RESPOSTA:
 - Seja conciso mas completo
 - Use bullets para passos quando aplicável
 - Mencione fontes da base de conhecimento quando usar
-- Sugira assuntos de chamado quando relevante`;
+- Sugira assuntos de chamado quando relevante
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+Pergunta do usuário: ${message}`;
+
+    // Usando modelo Microsoft DialoGPT do Hugging Face
+    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
+        'Authorization': `Bearer ${huggingFaceApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7,
-        max_tokens: 1000
+        inputs: systemPrompt,
+        parameters: {
+          max_length: 1000,
+          temperature: 0.7,
+          do_sample: true,
+          top_p: 0.9
+        }
       }),
     });
 
-    console.log('Status da resposta OpenAI:', response.status);
+    console.log('Status da resposta Hugging Face:', response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Erro da OpenAI - Status:', response.status, 'Resposta:', errorText);
-      throw new Error(`Erro da API OpenAI: ${response.status} - ${errorText}`);
+      console.error('Erro do Hugging Face - Status:', response.status, 'Resposta:', errorText);
+      throw new Error(`Erro da API Hugging Face: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Resposta da OpenAI recebida com sucesso');
+    console.log('Resposta do Hugging Face recebida:', data);
     
-    const botResponse = data.choices?.[0]?.message?.content;
+    let botResponse;
     
-    if (!botResponse) {
-      console.error('Resposta vazia da OpenAI:', data);
-      throw new Error('Resposta vazia da OpenAI');
+    // Verificar se a resposta está no formato esperado
+    if (Array.isArray(data) && data.length > 0) {
+      if (data[0].generated_text) {
+        // Extrair apenas a resposta gerada, removendo o prompt original
+        const fullText = data[0].generated_text;
+        const userQuestion = `Pergunta do usuário: ${message}`;
+        const responseStart = fullText.indexOf(userQuestion) + userQuestion.length;
+        botResponse = fullText.substring(responseStart).trim();
+        
+        // Se a resposta estiver vazia, usar o texto completo
+        if (!botResponse) {
+          botResponse = fullText;
+        }
+      } else {
+        botResponse = data[0].text || JSON.stringify(data[0]);
+      }
+    } else if (data.generated_text) {
+      botResponse = data.generated_text;
+    } else {
+      console.error('Formato de resposta inesperado:', data);
+      botResponse = 'Desculpe, recebi uma resposta em formato inesperado da IA. Tente reformular sua pergunta.';
+    }
+    
+    if (!botResponse || botResponse.trim() === '') {
+      console.error('Resposta vazia do Hugging Face:', data);
+      throw new Error('Resposta vazia do Hugging Face');
     }
 
     console.log('Resposta processada com sucesso');
