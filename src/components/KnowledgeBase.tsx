@@ -1,257 +1,211 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import { Search, Plus } from 'lucide-react';
+import { Badge } from './ui/badge';
+import { Input } from './ui/input';
+import { Search, Plus, Eye, ThumbsUp, FileText, Upload, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
-import KnowledgeItemCard from './KnowledgeItemCard';
+import { useAuth } from '@/hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 import KnowledgeCreateModal from './KnowledgeCreateModal';
 import KnowledgeSolutionModal from './KnowledgeSolutionModal';
-import KnowledgeSearchBar from './KnowledgeSearchBar';
-import KnowledgeBaseSeeder from './KnowledgeBaseSeeder';
+import KnowledgeItemCard from './KnowledgeItemCard';
 
 interface KnowledgeItem {
   id: string;
   titulo: string;
   problema_descricao: string;
   solucao: string;
-  categoria: string;
-  tags: string[];
-  visualizacoes: number;
-  util_count: number;
+  categoria?: string;
+  tags?: string[];
+  visualizacoes?: number;
+  util_count?: number;
   created_at: string;
-  arquivo_print?: string;
+  updated_at: string;
 }
 
 const KnowledgeBase = () => {
-  const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [knowledgeItems, setKnowledgeItems] = useState<KnowledgeItem[]>([]);
-  const [filteredItems, setFilteredItems] = useState<KnowledgeItem[]>([]);
+  const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    titulo: '',
-    problema_descricao: '',
-    solucao: '',
-    categoria: '',
-    tags: '',
-    arquivo_print: ''
-  });
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    loadKnowledgeBase();
+    fetchKnowledgeItems();
   }, []);
 
-  useEffect(() => {
-    filterItems();
-  }, [searchTerm, knowledgeItems]);
-
-  const loadKnowledgeBase = async () => {
+  const fetchKnowledgeItems = async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('base_conhecimento')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-
-      setKnowledgeItems(data || []);
-    } catch (error) {
-      console.error('Erro ao carregar base de conhecimento:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar base de conhecimento",
-        variant: "destructive"
-      });
+      if (error) {
+        console.error('Erro ao buscar itens:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar itens da base de conhecimento",
+          variant: "destructive"
+        });
+      } else {
+        setItems(data || []);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const filterItems = () => {
-    if (!searchTerm) {
-      setFilteredItems(knowledgeItems);
-      return;
-    }
-
-    const filtered = knowledgeItems.filter(item =>
-      item.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.problema_descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.categoria.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-
-    setFilteredItems(filtered);
-  };
-
-  const handleViewSolution = async (item: KnowledgeItem) => {
+  const handleOpenSolution = async (item: KnowledgeItem) => {
     setSelectedItem(item);
-    
+
     // Incrementar visualizações
     try {
-      await supabase
+      const { error } = await supabase
         .from('base_conhecimento')
-        .update({ visualizacoes: item.visualizacoes + 1 })
+        .update({ visualizacoes: (item.visualizacoes || 0) + 1 })
         .eq('id', item.id);
-      
-      // Atualizar estado local
-      setKnowledgeItems(prev => prev.map(i => 
-        i.id === item.id ? { ...i, visualizacoes: i.visualizacoes + 1 } : i
-      ));
+
+      if (error) {
+        console.error('Erro ao atualizar visualizações:', error);
+      } else {
+        // Atualizar localmente para refletir a mudança
+        setItems(prevItems =>
+          prevItems.map(i =>
+            i.id === item.id ? { ...i, visualizacoes: (i.visualizacoes || 0) + 1 } : i
+          )
+        );
+      }
     } catch (error) {
-      console.error('Erro ao atualizar visualizações:', error);
+      console.error('Erro ao incrementar visualizações:', error);
     }
   };
 
-  const handleMarkUseful = async (item: KnowledgeItem) => {
-    try {
-      await supabase
-        .from('base_conhecimento')
-        .update({ util_count: item.util_count + 1 })
-        .eq('id', item.id);
-      
-      // Atualizar estado local
-      setKnowledgeItems(prev => prev.map(i => 
-        i.id === item.id ? { ...i, util_count: i.util_count + 1 } : i
-      ));
-
-      toast({
-        title: "Obrigado!",
-        description: "Sua avaliação foi registrada"
-      });
-    } catch (error) {
-      console.error('Erro ao marcar como útil:', error);
-    }
+  const handleCloseSolution = () => {
+    setSelectedItem(null);
   };
 
-  const handleCreateKnowledge = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.titulo || !formData.problema_descricao || !formData.solucao) {
-      toast({
-        title: "Erro",
-        description: "Preencha todos os campos obrigatórios",
-        variant: "destructive"
-      });
-      return;
-    }
-
+  const handleVote = async (item: KnowledgeItem, isUpvote: boolean) => {
     try {
-      const tagsArray = formData.tags 
-        ? formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-        : [];
+      const newUtilCount = (item.util_count || 0) + (isUpvote ? 1 : -1);
 
       const { error } = await supabase
         .from('base_conhecimento')
-        .insert({
-          titulo: formData.titulo,
-          problema_descricao: formData.problema_descricao,
-          solucao: formData.solucao,
-          categoria: formData.categoria || 'Geral',
-          tags: tagsArray,
-          arquivo_print: formData.arquivo_print || null
-        });
+        .update({ util_count: newUtilCount })
+        .eq('id', item.id);
 
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso!",
-        description: "Conhecimento criado com sucesso"
-      });
-
-      // Reset form
-      setFormData({
-        titulo: '',
-        problema_descricao: '',
-        solucao: '',
-        categoria: '',
-        tags: '',
-        arquivo_print: ''
-      });
-      setShowCreateForm(false);
-      
-      // Recarregar lista
-      loadKnowledgeBase();
+      if (error) {
+        console.error('Erro ao atualizar contagem de votos:', error);
+      } else {
+        // Atualizar localmente
+        setItems(prevItems =>
+          prevItems.map(i =>
+            i.id === item.id ? { ...i, util_count: newUtilCount } : i
+          )
+        );
+      }
     } catch (error) {
-      console.error('Erro ao criar conhecimento:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao criar conhecimento",
-        variant: "destructive"
-      });
+      console.error('Erro ao processar voto:', error);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg">Carregando base de conhecimento...</div>
-      </div>
-    );
-  }
+  const categories = ['all', ...new Set(items.map(item => item.categoria).filter(Boolean))];
+
+  const filteredItems = items.filter(item => {
+    const matchesSearch = item.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.problema_descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         item.solucao.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' || item.categoria === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="space-y-6">
-      {/* Seeder Component - só aparece se não há itens */}
-      {knowledgeItems.length === 0 && (
-        <KnowledgeBaseSeeder />
-      )}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Base de Conhecimento</h2>
+          <p className="text-gray-600">Documentações e soluções para problemas comuns</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            onClick={() => navigate('/google-docs-sync')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <FileText className="h-4 w-4" />
+            Sincronizar Google Docs
+            <ExternalLink className="h-3 w-3" />
+          </Button>
+          <Button 
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Novo Item
+          </Button>
+        </div>
+      </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Base de Conhecimento
-            </CardTitle>
-            <Button 
-              onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" />
-              Novo Conhecimento
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <KnowledgeSearchBar 
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-          />
-
-          <div className="grid gap-4">
-            {filteredItems.map((item) => (
-              <KnowledgeItemCard
-                key={item.id}
-                item={item}
-                onViewSolution={handleViewSolution}
-              />
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <Input
+          type="search"
+          placeholder="Buscar..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full sm:w-auto"
+        />
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Filtrar por categoria:</span>
+          <div className="flex flex-wrap gap-1">
+            {categories.map(category => (
+              <Badge
+                key={category}
+                variant={selectedCategory === category ? 'default' : 'secondary'}
+                onClick={() => setSelectedCategory(category)}
+                className="cursor-pointer"
+              >
+                {category === 'all' ? 'Todas' : category}
+              </Badge>
             ))}
           </div>
+        </div>
+      </div>
 
-          {filteredItems.length === 0 && searchTerm && (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum resultado encontrado para sua busca.
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {loading ? (
+        <div className="text-center py-4">Carregando...</div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredItems.map(item => (
+            <KnowledgeItemCard
+              key={item.id}
+              item={item}
+              onOpenSolution={() => handleOpenSolution(item)}
+              onVote={handleVote}
+            />
+          ))}
+        </div>
+      )}
 
       <KnowledgeCreateModal
-        showCreateForm={showCreateForm}
-        formData={formData}
-        setFormData={setFormData}
-        onSubmit={handleCreateKnowledge}
-        onClose={() => setShowCreateForm(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onItemCreated={fetchKnowledgeItems}
       />
 
-      <KnowledgeSolutionModal
-        selectedItem={selectedItem}
-        onClose={() => setSelectedItem(null)}
-        onMarkUseful={handleMarkUseful}
-      />
+      {selectedItem && (
+        <KnowledgeSolutionModal
+          isOpen={true}
+          item={selectedItem}
+          onClose={handleCloseSolution}
+        />
+      )}
     </div>
   );
 };

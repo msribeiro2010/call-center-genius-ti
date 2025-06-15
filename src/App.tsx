@@ -8,6 +8,7 @@ import { AuthProvider } from "./components/AuthProvider";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ChatBotPage from "./pages/ChatBotPage";
+import GoogleDocsSyncPage from "./pages/GoogleDocsSyncPage";
 import AdminPanel from "./components/AdminPanel";
 import { ErrorBoundary } from "react-error-boundary";
 
@@ -52,6 +53,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/chatbot" element={<ChatBotPage />} />
+                <Route path="/google-docs-sync" element={<GoogleDocsSyncPage />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
