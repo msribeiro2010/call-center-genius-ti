@@ -67,7 +67,7 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
   };
 
   const generateFullTemplate = () => {
-    return `RESUMO: ${ticketData.titulo}
+    return `RESUMO: ${ticketData.titulo || 'N/A'}
 
 TIPO DE ISSUE: ${formatType(ticketData.tipo)}
 
@@ -143,7 +143,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
             <CardContent className="space-y-4">
               <CopyField 
                 label="RESUMO (Summary)" 
-                value={ticketData.titulo} 
+                value={ticketData.titulo || 'N/A'} 
                 className="border-l-4 border-blue-500"
               />
               
