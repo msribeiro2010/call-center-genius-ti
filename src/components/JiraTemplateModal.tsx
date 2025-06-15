@@ -66,12 +66,23 @@ const JiraTemplateModal: React.FC<JiraTemplateModalProps> = ({ isOpen, onClose, 
     return ticketData.ojDetectada || 'N/A';
   };
 
+  const formatUsuarioAfetado = () => {
+    const cpf = ticketData.cpfUsuarioAfetado || 'N/A';
+    const nome = ticketData.nomeUsuarioAfetado || 'N/A';
+    const perfil = ticketData.perfilUsuarioAfetado || 'N/A';
+    const oj = getOJName();
+    
+    return `${cpf}/${nome}/${perfil}/${oj}`;
+  };
+
   const generateFullTemplate = () => {
     return `RESUMO: ${ticketData.titulo || 'N/A'}
 
 TIPO DE ISSUE: ${formatType(ticketData.tipo)}
 
 PRIORIDADE: ${formatPriority(ticketData.prioridade)}
+
+USUÁRIO AFETADO: ${formatUsuarioAfetado()}
 
 INFORMAÇÕES DO PROCESSO:
 - Chamado de Origem: ${ticketData.chamadoOrigem || 'N/A'}
@@ -159,6 +170,12 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
               </div>
 
               <CopyField 
+                label="USUÁRIO AFETADO (CPF/Nome/Perfil/OJ)" 
+                value={formatUsuarioAfetado()}
+                className="border-l-4 border-purple-500"
+              />
+
+              <CopyField 
                 label="DESCRIÇÃO (Description)" 
                 value={ticketData.descricao}
                 className="border-l-4 border-green-500"
@@ -166,7 +183,7 @@ Data de Criação: ${new Date().toLocaleDateString('pt-BR')}`.trim();
             </CardContent>
           </Card>
 
-          {/* Informações do Processo - movido para primeiro */}
+          {/* Informações do Processo */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg text-blue-700">Informações do Processo</CardTitle>
