@@ -151,12 +151,10 @@ export const useAuth = () => {
     console.log('Fazendo logout...');
     
     try {
-      // Limpar o estado local imediatamente
-      setUser(null);
-      setSession(null);
-      
-      // Fazer logout no Supabase
-      const { error } = await supabase.auth.signOut();
+      // Fazer logout no Supabase PRIMEIRO
+      const { error } = await supabase.auth.signOut({
+        scope: 'global' // Força logout em todas as sessões
+      });
       
       if (error) {
         console.error('Erro no logout:', error);
@@ -165,20 +163,37 @@ export const useAuth = () => {
           description: error.message,
           variant: "destructive"
         });
-      } else {
-        console.log('Logout realizado com sucesso');
-        toast({
-          title: "Logout realizado",
-          description: "Você foi desconectado com sucesso",
-        });
+        return { error };
       }
-      
-      return { error };
-    } catch (err) {
-      console.error('Erro inesperado no logout:', err);
-      // Mesmo com erro, limpar o estado local
+
+      // Limpar estado local após sucesso
       setUser(null);
       setSession(null);
+      
+      console.log('Logout realizado com sucesso');
+      
+      // Forçar recarregamento da página para garantir limpeza completa
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
+      toast({
+        title: "Logout realizado",
+        description: "Você foi desconectado com sucesso",
+      });
+      
+      return { error: null };
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err);
+      
+      // Em caso de erro, ainda assim limpar o estado local e recarregar
+      setUser(null);
+      setSession(null);
+      
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 100);
+      
       return { error: err };
     }
   };
