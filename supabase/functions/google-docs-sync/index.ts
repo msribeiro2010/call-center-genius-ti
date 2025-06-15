@@ -14,11 +14,12 @@ serve(async (req) => {
   }
 
   try {
-    const { action, accessToken } = await req.json();
+    const { action, accessToken, code } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
+    const googleClientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
     
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Configurações do Supabase não encontradas');
@@ -49,21 +50,54 @@ serve(async (req) => {
         throw new Error('Google Client ID não configurado');
       }
 
-      // Usar a URI de callback correta do Supabase
-      const redirectUri = `${supabaseUrl}/auth/v1/callback`;
+      // Usar redirect_uri simples para popup
+      const redirectUri = `${supabaseUrl}/functions/v1/google-docs-sync`;
       const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `response_type=code&` +
+        `response_type=token&` +
         `scope=${encodeURIComponent(scope)}&` +
-        `access_type=offline&` +
-        `prompt=consent`;
+        `access_type=online`;
 
       return new Response(JSON.stringify({
         success: true,
         authUrl: authUrl
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (action === 'exchange_code') {
+      if (!googleClientId || !googleClientSecret) {
+        throw new Error('Configurações do Google não encontradas');
+      }
+
+      // Trocar código por token de acesso
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: googleClientId,
+          client_secret: googleClientSecret,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${supabaseUrl}/auth/v1/callback`,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new Error('Erro ao trocar código por token');
+      }
+
+      const tokenData = await tokenResponse.json();
+      
+      return new Response(JSON.stringify({
+        success: true,
+        access_token: tokenData.access_token
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

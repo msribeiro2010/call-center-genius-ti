@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
@@ -82,9 +81,12 @@ const GoogleDocsSync = () => {
             });
           }
           
-          if (popup?.location?.hash) {
-            const hash = popup.location.hash;
-            const token = hash.match(/access_token=([^&]*)/)?.[1];
+          // Verificar se conseguimos acessar a URL (mesmo domínio)
+          if (popup?.location?.href && popup.location.href !== authUrl) {
+            const url = new URL(popup.location.href);
+            const fragment = url.hash.substring(1);
+            const params = new URLSearchParams(fragment);
+            const token = params.get('access_token');
             
             if (token) {
               setAccessToken(token);
@@ -99,7 +101,7 @@ const GoogleDocsSync = () => {
             }
           }
         } catch (e) {
-          // Ignorar erros de cross-origin
+          // Ignorar erros de cross-origin até conseguirmos acessar a URL
         }
       }, 1000);
 
