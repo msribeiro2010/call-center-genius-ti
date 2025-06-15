@@ -38,8 +38,11 @@ const Index = () => {
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
   const navigate = useNavigate();
 
+  console.log('Index render:', { user: !!user, loading });
+
   // Mostrar loading enquanto verifica autenticação
   if (loading) {
+    console.log('Mostrando loading...');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -52,12 +55,14 @@ const Index = () => {
 
   // Se não estiver logado, mostrar página de autenticação
   if (!user) {
+    console.log('Usuário não logado, mostrando AuthPage...');
     return <AuthPage />;
   }
 
+  console.log('Usuário logado, mostrando dashboard...');
+
   const handleEditTicket = (ticket: Ticket) => {
     setEditingTicket(ticket);
-    // TODO: Implement edit modal
     console.log('Editing ticket:', ticket);
   };
 

@@ -11,30 +11,62 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    console.log('Inicializando useAuth...');
+    
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      try {
+        // Verificar sessão existente primeiro
+        console.log('Verificando sessão existente...');
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Erro ao obter sessão:', error);
+        } else {
+          console.log('Sessão obtida:', session ? 'Logado' : 'Não logado');
+        }
+
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro na inicialização da auth:', error);
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
     // Configurar listener de mudanças de autenticação
+    console.log('Configurando listener de auth...');
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('Auth state change:', event, session);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('Auth state change:', event, session ? 'Logado' : 'Não logado');
         
-        // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
-        if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+          
+          // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
+          if (event === 'SIGNED_OUT') {
+            setSession(null);
+            setUser(null);
+          }
         }
       }
     );
 
-    // Verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Inicializar
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, nomeCompleto: string) => {
@@ -150,6 +182,8 @@ export const useAuth = () => {
       return { error: err };
     }
   };
+
+  console.log('useAuth state:', { user: !!user, session: !!session, loading });
 
   return {
     user,
