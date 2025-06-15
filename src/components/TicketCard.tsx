@@ -29,6 +29,7 @@ interface TicketCardProps {
   onViewTicket: (ticket: Ticket) => void;
   onEditTicket: (ticket: Ticket) => void;
   onDeleteTicket: (ticketId: string) => void;
+  showDeleteOption?: boolean;
 }
 
 const TicketCard: React.FC<TicketCardProps> = ({
@@ -36,6 +37,7 @@ const TicketCard: React.FC<TicketCardProps> = ({
   onViewTicket,
   onEditTicket,
   onDeleteTicket,
+  showDeleteOption = true,
 }) => {
   return (
     <ContextMenu>
@@ -90,13 +92,15 @@ const TicketCard: React.FC<TicketCardProps> = ({
           <Edit className="mr-2 h-4 w-4" />
           Editar Chamado
         </ContextMenuItem>
-        <ContextMenuItem 
-          onClick={() => onDeleteTicket(ticket.id)}
-          className="text-red-600 focus:text-red-600"
-        >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Excluir Chamado
-        </ContextMenuItem>
+        {showDeleteOption && (
+          <ContextMenuItem 
+            onClick={() => onDeleteTicket(ticket.id)}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir Chamado
+          </ContextMenuItem>
+        )}
       </ContextMenuContent>
     </ContextMenu>
   );
