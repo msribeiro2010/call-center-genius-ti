@@ -30,6 +30,7 @@ interface TicketCardProps {
   onEditTicket: (ticket: Ticket) => void;
   onDeleteTicket: (ticketId: string) => void;
   showDeleteOption?: boolean;
+  isAdmin?: boolean;
 }
 
 const TicketCard: React.FC<TicketCardProps> = ({
@@ -38,11 +39,29 @@ const TicketCard: React.FC<TicketCardProps> = ({
   onEditTicket,
   onDeleteTicket,
   showDeleteOption = true,
+  isAdmin = false,
 }) => {
+  const handleCardClick = () => {
+    onViewTicket(ticket);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEditTicket(ticket);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteTicket(ticket.id);
+  };
+
   return (
     <ContextMenu>
       <ContextMenuTrigger>
-        <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer">
+        <div 
+          className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+          onClick={handleCardClick}
+        >
           <div className="flex-1">
             <h3 className="font-medium text-gray-900">{ticket.titulo}</h3>
             <p className="text-sm text-gray-500">
@@ -69,17 +88,47 @@ const TicketCard: React.FC<TicketCardProps> = ({
             <Badge variant={ticket.status === "Aberto" ? "destructive" : "default"}>
               {ticket.status}
             </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewTicket(ticket);
-              }}
-              className="ml-2"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
+            
+            {/* Botões visíveis para administradores */}
+            {isAdmin && (
+              <div className="flex items-center space-x-1 ml-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleEditClick}
+                  className="h-8 w-8 p-0"
+                  title="Editar Chamado"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                {showDeleteOption && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDeleteClick}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    title="Excluir Chamado"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+            
+            {/* Botão de visualizar sempre visível para não-admins */}
+            {!isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewTicket(ticket);
+                }}
+                className="ml-2"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       </ContextMenuTrigger>

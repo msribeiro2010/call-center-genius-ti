@@ -139,7 +139,7 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
         <CardHeader>
           <CardTitle className="text-xl text-gray-800">Chamados Recentes</CardTitle>
           <CardDescription>
-            {loading ? "Carregando chamados..." : isAdmin ? "Visualize os últimos chamados criados - Clique com o botão direito para editar ou excluir" : "Visualize os últimos chamados criados"}
+            {loading ? "Carregando chamados..." : isAdmin ? "Visualize os últimos chamados criados - Clique no card para visualizar ou use os botões para editar/excluir" : "Visualize os últimos chamados criados - Clique no card para visualizar"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -167,6 +167,7 @@ const RecentTickets: React.FC<RecentTicketsProps> = ({
                   onEditTicket={onEditTicket}
                   onDeleteTicket={isAdmin ? handleDeleteClick : () => {}}
                   showDeleteOption={isAdmin}
+                  isAdmin={isAdmin}
                 />
               ))}
             </div>
