@@ -16,28 +16,55 @@ export const useAssuntos = () => {
   useEffect(() => {
     const fetchAssuntos = async () => {
       try {
-        console.log('Iniciando busca de assuntos...');
+        console.log('=== INÍCIO DA BUSCA DE ASSUNTOS ===');
+        console.log('Supabase URL:', supabase.supabaseUrl);
         setLoading(true);
         setError(null);
         
+        // Primeiro, vamos verificar se a tabela existe
+        const { data: tableData, error: tableError } = await supabase
+          .from('assuntos')
+          .select('count(*)', { count: 'exact', head: true });
+
+        console.log('Verificação da tabela assuntos:', { tableData, tableError });
+
         const { data, error } = await supabase
           .from('assuntos')
           .select('id, nome, categoria')
           .order('categoria', { ascending: true })
           .order('nome', { ascending: true });
 
+        console.log('=== RESULTADO DA BUSCA ===');
+        console.log('Erro:', error);
+        console.log('Dados recebidos:', data);
+        console.log('Quantidade de registros:', data?.length || 0);
+
         if (error) {
-          console.error('Erro ao buscar assuntos:', error);
+          console.error('Erro detalhado ao buscar assuntos:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          });
           throw error;
         }
         
-        console.log('Assuntos encontrados:', data?.length, data);
+        if (data && data.length > 0) {
+          console.log('Primeiros 3 assuntos:', data.slice(0, 3));
+        } else {
+          console.warn('ATENÇÃO: Nenhum assunto encontrado na base de dados!');
+        }
+        
         setAssuntos(data || []);
-      } catch (err) {
-        console.error('Erro ao buscar assuntos:', err);
-        setError('Erro ao carregar assuntos');
+      } catch (err: any) {
+        console.error('=== ERRO NA BUSCA DE ASSUNTOS ===');
+        console.error('Erro capturado:', err);
+        console.error('Tipo do erro:', typeof err);
+        console.error('Stack trace:', err.stack);
+        setError('Erro ao carregar assuntos: ' + (err.message || err.toString()));
       } finally {
         setLoading(false);
+        console.log('=== FIM DA BUSCA DE ASSUNTOS ===');
       }
     };
 
