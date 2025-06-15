@@ -140,10 +140,12 @@ serve(async (req) => {
 
     const huggingFaceApiKey = "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";
 
-    // Prompt otimizado para o contexto do PJe TRT15
+    // Criar um prompt estruturado para um modelo de texto mais simples
     const systemPrompt = `Você é um assistente especializado em suporte técnico do sistema PJe (Processo Judicial Eletrônico) do TRT15.
 
-CONTEXTO DA BASE DE CONHECIMENTO:
+Pergunta do usuário: "${message}"
+
+INFORMAÇÕES DA BASE DE CONHECIMENTO:
 ${contextoFormatado.baseConhecimento.length > 0 ? 
   contextoFormatado.baseConhecimento.map((item, index) => 
     `${index + 1}. PROBLEMA: ${item.problema}\nSOLUÇÃO: ${item.solucao}\nCATEGORIA: ${item.categoria}\n`
@@ -159,25 +161,12 @@ ${contextoFormatado.chamadosSimilares.length > 0 ?
     `${index + 1}. ${item.titulo} - Status: ${item.status}\n`
   ).join('\n') : 'Nenhum chamado similar encontrado.'}
 
-INSTRUÇÕES PARA RESPOSTA:
-1. Analise a pergunta: "${message}"
-2. Se encontrar solução exata na base de conhecimento, cite diretamente
-3. Se não houver solução exata, combine informações disponíveis para sugerir uma abordagem
-4. Recomende assuntos apropriados quando relevante
-5. Seja técnico mas didático, use linguagem clara
-6. Forneça passos práticos sempre que possível
-7. Se não souber, seja honesto e sugira contatar o suporte
-
-FORMATO DA RESPOSTA:
-- Seja direto e objetivo
-- Use bullets para listar passos
-- Mencione fontes da base quando usar informações específicas
-- Sugira categorias de chamado quando apropriado`;
+Responda de forma técnica mas didática, forneça passos práticos quando possível. Se encontrar solução na base de conhecimento, cite diretamente. Caso contrário, combine as informações disponíveis para sugerir uma abordagem.`;
 
     console.log('Enviando para Hugging Face...');
 
-    // Usando modelo de conversação otimizado do Hugging Face
-    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-large', {
+    // Usando modelo de geração de texto mais confiável
+    const response = await fetch('https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${huggingFaceApiKey}`,
@@ -186,53 +175,23 @@ FORMATO DA RESPOSTA:
       body: JSON.stringify({
         inputs: systemPrompt,
         parameters: {
-          max_length: 800,
+          max_new_tokens: 500,
           temperature: 0.7,
           do_sample: true,
           top_p: 0.9,
-          repetition_penalty: 1.1
+          repetition_penalty: 1.1,
+          return_full_text: false
         }
       }),
     });
 
     console.log('Status da resposta Hugging Face:', response.status);
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Erro do Hugging Face - Status:', response.status, 'Resposta:', errorText);
-      throw new Error(`Erro da API Hugging Face: ${response.status} - ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log('Resposta do Hugging Face recebida');
-    
     let botResponse;
-    
-    // Processar resposta da IA
-    if (Array.isArray(data) && data.length > 0) {
-      if (data[0].generated_text) {
-        const fullText = data[0].generated_text;
-        const userQuestion = `"${message}"`;
-        const responseStart = fullText.indexOf(userQuestion) + userQuestion.length;
-        botResponse = fullText.substring(responseStart).trim();
-        
-        if (!botResponse) {
-          botResponse = fullText;
-        }
-      } else {
-        botResponse = data[0].text || JSON.stringify(data[0]);
-      }
-    } else if (data.generated_text) {
-      botResponse = data.generated_text;
-    } else {
-      console.error('Formato de resposta inesperado:', data);
-      botResponse = 'Desculpe, recebi uma resposta em formato inesperado da IA. Tente reformular sua pergunta.';
-    }
-    
-    // Fallback caso a IA não responda adequadamente
-    if (!botResponse || botResponse.trim() === '' || botResponse.includes('generated_text')) {
-      console.log('Gerando resposta baseada na base de conhecimento...');
-      
+
+    if (!response.ok) {
+      console.log('Erro na API Hugging Face, usando resposta baseada na base de conhecimento...');
+      // Se a API do Hugging Face falhar, gerar resposta baseada na base de conhecimento
       if (contextoFormatado.baseConhecimento.length > 0) {
         const melhorSolucao = contextoFormatado.baseConhecimento[0];
         botResponse = `Com base na nossa base de conhecimento, encontrei uma solução relacionada ao seu problema:
@@ -244,7 +203,7 @@ FORMATO DA RESPOSTA:
 **Categoria:** ${melhorSolucao.categoria}
 
 ${contextoFormatado.assuntos.length > 0 ? 
-  `\n**Assuntos relacionados que você pode usar:** ${contextoFormatado.assuntos.slice(0, 3).map(a => a.nome).join(', ')}` : ''}
+  `\n**Assuntos relacionados:** ${contextoFormatado.assuntos.slice(0, 3).map(a => a.nome).join(', ')}` : ''}
 
 Se esta solução não resolver seu problema, por favor reformule sua pergunta ou entre em contato com o suporte técnico.`;
       } else {
@@ -258,6 +217,55 @@ Se esta solução não resolver seu problema, por favor reformule sua pergunta o
 ${contextoFormatado.assuntos.length > 0 ? 
   `**Assuntos que podem estar relacionados:** ${contextoFormatado.assuntos.slice(0, 5).map(a => a.nome).join(', ')}` : ''}`;
       }
+    } else {
+      const data = await response.json();
+      console.log('Resposta do Hugging Face recebida');
+      
+      // Processar resposta da IA
+      if (Array.isArray(data) && data.length > 0) {
+        if (data[0].generated_text) {
+          botResponse = data[0].generated_text.trim();
+        } else {
+          botResponse = data[0].text || JSON.stringify(data[0]);
+        }
+      } else if (data.generated_text) {
+        botResponse = data.generated_text.trim();
+      } else {
+        console.log('Formato inesperado da resposta, usando fallback...');
+        // Fallback para resposta baseada na base de conhecimento
+        if (contextoFormatado.baseConhecimento.length > 0) {
+          const melhorSolucao = contextoFormatado.baseConhecimento[0];
+          botResponse = `Com base na nossa base de conhecimento:
+
+**${melhorSolucao.titulo}**
+
+**Problema:** ${melhorSolucao.problema}
+
+**Solução:** ${melhorSolucao.solucao}
+
+**Categoria:** ${melhorSolucao.categoria}`;
+        } else {
+          botResponse = `Consultei nossa base de conhecimento mas não encontrei uma solução específica para "${message}". 
+
+**Dicas:**
+• Reformule sua pergunta com mais detalhes
+• Mencione mensagens de erro específicas
+• Descreva os passos que levaram ao problema
+
+Entre em contato com o suporte técnico se precisar de assistência adicional.`;
+        }
+      }
+    }
+
+    // Garantir que sempre temos uma resposta válida
+    if (!botResponse || botResponse.trim() === '') {
+      botResponse = `Consultei nossa base de conhecimento e encontrei ${contextoFormatado.baseConhecimento.length} itens relacionados ao seu problema.
+
+${contextoFormatado.baseConhecimento.length > 0 ? 
+  `**Solução sugerida:** ${contextoFormatado.baseConhecimento[0].solucao}` : 
+  'Não encontrei soluções específicas na base de conhecimento.'}
+
+Para uma resposta mais precisa, reformule sua pergunta ou entre em contato com o suporte técnico.`;
     }
 
     console.log('Resposta processada com sucesso');
