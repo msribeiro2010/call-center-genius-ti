@@ -49,14 +49,17 @@ serve(async (req) => {
         throw new Error('Google Client ID não configurado');
       }
 
-      const redirectUri = `${supabaseUrl.replace('.supabase.co', '.supabase.co')}`;
+      // Usar a URI de callback correta do Supabase
+      const redirectUri = `${supabaseUrl}/auth/v1/callback`;
       const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/documents.readonly';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${googleClientId}&` +
-        `redirect_uri=${redirectUri}&` +
-        `response_type=token&` +
-        `scope=${encodeURIComponent(scope)}`;
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
 
       return new Response(JSON.stringify({
         success: true,
