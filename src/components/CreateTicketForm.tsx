@@ -16,6 +16,7 @@ import { useUsuarios } from '@/hooks/useUsuarios';
 import { primeiroGrauOJs, segundoGrauOJs } from '@/data';
 import DescriptionImprover from './DescriptionImprover';
 import SearchableAssuntoSelect from './SearchableAssuntoSelect';
+import { FileText, User, Scale, AlertCircle, Settings, Hash } from 'lucide-react';
 
 interface CreateTicketFormProps {
   onTicketCreated?: () => void;
@@ -28,6 +29,7 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   const { assuntos, loading: assuntosLoading } = useAssuntos();
   const { cpfError, validateCPF, formatCPF, setCpfError } = useCPFValidation();
   const { buscarUsuarioPorCPF, salvarUsuario, loading: usuariosLoading } = useUsuarios();
+  
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState({
     chamadoOrigem: '',
@@ -373,103 +375,140 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
   }, {} as Record<string, typeof assuntos>);
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>{editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado'}</CardTitle>
+    <div className="space-y-8 max-w-6xl mx-auto">
+      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
+        <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
+          <CardTitle className="text-2xl font-bold flex items-center gap-3">
+            <FileText className="h-7 w-7" />
+            {editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado'}
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="chamadoOrigem">Número do Chamado de Origem</Label>
-                <Input
-                  id="chamadoOrigem"
-                  value={formData.chamadoOrigem}
-                  onChange={(e) => setFormData(prev => ({ ...prev, chamadoOrigem: e.target.value }))}
-                  placeholder="Ex: HELP-12345"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="grau">Grau *</Label>
-                <Select 
-                  value={formData.grau} 
-                  onValueChange={handleGrauChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o grau" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1º Grau</SelectItem>
-                    <SelectItem value="2">2º Grau</SelectItem>
-                  </SelectContent>
-                </Select>
+        <CardContent className="p-8">
+          <form onSubmit={handleSubmit} className="space-y-8">
+            {/* Seção de Informações Básicas */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <Hash className="h-5 w-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Informações Básicas</h3>
               </div>
               
-              <div>
-                <Label htmlFor="numeroProcesso">Número do Processo</Label>
-                <Input
-                  id="numeroProcesso"
-                  value={formData.numeroProcesso}
-                  onChange={(e) => handleProcessoChange(e.target.value)}
-                  placeholder="Ex: 0010750-13.2024.5.15.0023"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="chamadoOrigem" className="text-sm font-medium text-gray-700">
+                    Número do Chamado de Origem
+                  </Label>
+                  <Input
+                    id="chamadoOrigem"
+                    value={formData.chamadoOrigem}
+                    onChange={(e) => setFormData(prev => ({ ...prev, chamadoOrigem: e.target.value }))}
+                    placeholder="Ex: HELP-12345"
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="grau" className="text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <Scale className="h-4 w-4" />
+                    Grau *
+                  </Label>
+                  <Select 
+                    value={formData.grau} 
+                    onValueChange={handleGrauChange}
+                  >
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Selecione o grau" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1º Grau</SelectItem>
+                      <SelectItem value="2">2º Grau</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="numeroProcesso" className="text-sm font-medium text-gray-700">
+                    Número do Processo
+                  </Label>
+                  <Input
+                    id="numeroProcesso"
+                    value={formData.numeroProcesso}
+                    onChange={(e) => handleProcessoChange(e.target.value)}
+                    placeholder="Ex: 0010750-13.2024.5.15.0023"
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Campo de Assunto com busca */}
-            <div>
-              <Label htmlFor="assunto">Assunto *</Label>
-              <SearchableAssuntoSelect
-                value={formData.assuntoId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, assuntoId: value }))}
-                assuntos={assuntos}
-                loading={assuntosLoading}
-                placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione ou digite para buscar assunto..."}
-              />
+            {/* Seção do Assunto */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <AlertCircle className="h-5 w-5 text-orange-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Assunto do Chamado</h3>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="assunto" className="text-sm font-medium text-gray-700">Assunto *</Label>
+                <SearchableAssuntoSelect
+                  value={formData.assuntoId}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, assuntoId: value }))}
+                  assuntos={assuntos}
+                  loading={assuntosLoading}
+                  placeholder={assuntosLoading ? "Carregando assuntos..." : "Selecione ou digite para buscar assunto..."}
+                />
+              </div>
             </div>
 
             {/* Seção do Usuário Afetado */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold mb-4">Usuário Afetado</h3>
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <User className="h-5 w-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Usuário Afetado</h3>
+              </div>
               
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="cpfUsuarioAfetado">CPF *</Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="cpfUsuarioAfetado" className="text-sm font-medium text-gray-700">CPF *</Label>
                   <Input
                     id="cpfUsuarioAfetado"
                     value={formData.cpfUsuarioAfetado}
                     onChange={(e) => handleCPFChange(e.target.value)}
                     placeholder="000.000.000-00"
                     maxLength={14}
-                    className={cpfError ? "border-red-500" : ""}
+                    className={`border-gray-300 focus:border-blue-500 focus:ring-blue-500 ${cpfError ? "border-red-500 focus:border-red-500" : ""}`}
                     required
                     disabled={usuariosLoading}
                   />
                   {cpfError && (
-                    <p className="text-sm text-red-500 mt-1">{cpfError}</p>
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {cpfError}
+                    </p>
                   )}
                   {usuariosLoading && (
-                    <p className="text-sm text-blue-500 mt-1">Buscando usuário...</p>
+                    <p className="text-sm text-blue-500 flex items-center gap-1">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                      Buscando usuário...
+                    </p>
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="nomeUsuarioAfetado">Nome Completo *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="nomeUsuarioAfetado" className="text-sm font-medium text-gray-700">Nome Completo *</Label>
                   <Input
                     id="nomeUsuarioAfetado"
                     value={formData.nomeUsuarioAfetado}
                     onChange={(e) => setFormData(prev => ({ ...prev, nomeUsuarioAfetado: e.target.value }))}
                     placeholder="Nome completo do usuário"
+                    className="border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                     required
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="perfilUsuarioAfetado">Perfil *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="perfilUsuarioAfetado" className="text-sm font-medium text-gray-700">Perfil *</Label>
                   <Select value={formData.perfilUsuarioAfetado} onValueChange={(value) => setFormData(prev => ({ ...prev, perfilUsuarioAfetado: value }))}>
-                    <SelectTrigger>
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                       <SelectValue placeholder="Selecione o perfil" />
                     </SelectTrigger>
                     <SelectContent>
@@ -486,65 +525,81 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
               </div>
             </div>
 
+            {/* OJ Detectada */}
             {formData.ojDetectada && (
-              <div className="p-3 bg-muted rounded-lg">
-                <Label className="text-sm font-medium">OJ Detectada:</Label>
-                <p className="text-sm text-muted-foreground">{formData.ojDetectada}</p>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Scale className="h-5 w-5 text-blue-600" />
+                  <Label className="text-sm font-semibold text-blue-800">OJ Detectada Automaticamente:</Label>
+                </div>
+                <p className="text-sm text-blue-700 font-medium">{formData.ojDetectada}</p>
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="orgaoJulgador">Órgão Julgador</Label>
-                <Select value={formData.orgaoJulgador} onValueChange={(value) => setFormData(prev => ({ ...prev, orgaoJulgador: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o órgão julgador" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ojOptions.map((oj) => (
-                      <SelectItem key={oj.codigo} value={oj.codigo}>
-                        {oj.codigo} - {oj.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            {/* Seção de Configurações Avançadas */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center gap-2 mb-6">
+                <Settings className="h-5 w-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-800">Configurações do Chamado</h3>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="orgaoJulgador" className="text-sm font-medium text-gray-700">Órgão Julgador</Label>
+                  <Select value={formData.orgaoJulgador} onValueChange={(value) => setFormData(prev => ({ ...prev, orgaoJulgador: value }))}>
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Selecione o órgão julgador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ojOptions.map((oj) => (
+                        <SelectItem key={oj.codigo} value={oj.codigo}>
+                          {oj.codigo} - {oj.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tipo" className="text-sm font-medium text-gray-700">Tipo do Chamado</Label>
+                  <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
+                    <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="incidente">🔥 Incidente</SelectItem>
+                      <SelectItem value="requisicao">📋 Requisição</SelectItem>
+                      <SelectItem value="problema">⚠️ Problema</SelectItem>
+                      <SelectItem value="mudanca">🔄 Mudança</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div>
-                <Label htmlFor="tipo">Tipo do Chamado</Label>
-                <Select value={formData.tipo} onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o tipo" />
+              <div className="mt-6 space-y-2">
+                <Label htmlFor="prioridade" className="text-sm font-medium text-gray-700">Prioridade</Label>
+                <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
+                  <SelectTrigger className="border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="Selecione a prioridade" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="incidente">Incidente</SelectItem>
-                    <SelectItem value="requisicao">Requisição</SelectItem>
-                    <SelectItem value="problema">Problema</SelectItem>
-                    <SelectItem value="mudanca">Mudança</SelectItem>
+                    <SelectItem value="1">1 - Muito Baixa 🟢</SelectItem>
+                    <SelectItem value="2">2 - Baixa 🟡</SelectItem>
+                    <SelectItem value="3">3 - Média 🟠</SelectItem>
+                    <SelectItem value="4">4 - Alta 🔴</SelectItem>
+                    <SelectItem value="5">5 - Crítica 🚨</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            <div>
-              <Label htmlFor="prioridade">Prioridade</Label>
-              <Select value={formData.prioridade.toString()} onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: parseInt(value) }))}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">1 - Muito Baixa</SelectItem>
-                  <SelectItem value="2">2 - Baixa</SelectItem>
-                  <SelectItem value="3">3 - Média</SelectItem>
-                  <SelectItem value="4">4 - Alta</SelectItem>
-                  <SelectItem value="5">5 - Crítica</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="descricao">Descrição Detalhada *</Label>
+            {/* Seção da Descrição */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-indigo-600" />
+                  <h3 className="text-lg font-semibold text-gray-800">Descrição Detalhada</h3>
+                </div>
                 <DescriptionImprover
                   currentDescription={formData.descricao}
                   onImprovedDescription={handleImprovedDescription}
@@ -552,19 +607,30 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
                   numeroProcesso={formData.numeroProcesso}
                 />
               </div>
-              <Textarea
-                id="descricao"
-                value={formData.descricao}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                placeholder="Descreva detalhadamente o problema ou solicitação"
-                rows={4}
-                required
-              />
+              
+              <div className="space-y-2">
+                <Label htmlFor="descricao" className="text-sm font-medium text-gray-700">Descrição *</Label>
+                <Textarea
+                  id="descricao"
+                  value={formData.descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                  placeholder="Descreva detalhadamente o problema ou solicitação..."
+                  rows={6}
+                  className="border-gray-300 focus:border-blue-500 focus:ring-blue-500 resize-none"
+                  required
+                />
+              </div>
             </div>
 
-            <Button type="submit" className="w-full">
-              {editingTicket ? 'Atualizar Chamado' : 'Criar Chamado'}
-            </Button>
+            {/* Botão de Submit */}
+            <div className="flex justify-center pt-4">
+              <Button 
+                type="submit" 
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-12 py-3 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+              >
+                {editingTicket ? '✏️ Atualizar Chamado' : '🚀 Criar Chamado'}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
