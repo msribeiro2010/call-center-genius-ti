@@ -95,55 +95,59 @@ serve(async (req) => {
 
     console.log('Base de conhecimento relevante encontrada:', knowledgeBase.length, 'itens');
 
-    // Buscar assuntos relacionados
+    // Buscar assuntos relacionados apenas se não encontrou solução específica
     let assuntos = [];
-    try {
-      for (const keyword of keywords.slice(0, 3)) { // Limitar a 3 palavras para performance
-        const { data: assuntosData, error: assuntosError } = await supabase
-          .from('assuntos')
-          .select('nome, categoria')
-          .or(`nome.ilike.%${keyword}%,categoria.ilike.%${keyword}%`)
-          .limit(5);
+    if (knowledgeBase.length === 0) {
+      try {
+        for (const keyword of keywords.slice(0, 3)) {
+          const { data: assuntosData, error: assuntosError } = await supabase
+            .from('assuntos')
+            .select('nome, categoria')
+            .or(`nome.ilike.%${keyword}%,categoria.ilike.%${keyword}%`)
+            .limit(5);
 
-        if (!assuntosError && assuntosData) {
-          assuntos.push(...assuntosData);
+          if (!assuntosError && assuntosData) {
+            assuntos.push(...assuntosData);
+          }
         }
+
+        // Remover duplicatas
+        assuntos = assuntos.filter((item, index, self) => 
+          index === self.findIndex(t => t.nome === item.nome)
+        );
+
+        console.log('Assuntos relacionados encontrados:', assuntos.length);
+      } catch (error) {
+        console.error('Erro ao buscar assuntos:', error);
       }
-
-      // Remover duplicatas
-      assuntos = assuntos.filter((item, index, self) => 
-        index === self.findIndex(t => t.nome === item.nome)
-      );
-
-      console.log('Assuntos relacionados encontrados:', assuntos.length);
-    } catch (error) {
-      console.error('Erro ao buscar assuntos:', error);
     }
 
-    // Buscar chamados similares
+    // Buscar chamados similares apenas se não encontrou solução específica
     let chamados = [];
-    try {
-      for (const keyword of keywords.slice(0, 3)) {
-        const { data: chamadosData, error: chamadosError } = await supabase
-          .from('chamados')
-          .select('id, titulo, descricao, status, tipo, prioridade')
-          .or(`titulo.ilike.%${keyword}%,descricao.ilike.%${keyword}%`)
-          .order('created_at', { ascending: false })
-          .limit(3);
+    if (knowledgeBase.length === 0) {
+      try {
+        for (const keyword of keywords.slice(0, 3)) {
+          const { data: chamadosData, error: chamadosError } = await supabase
+            .from('chamados')
+            .select('id, titulo, descricao, status, tipo, prioridade')
+            .or(`titulo.ilike.%${keyword}%,descricao.ilike.%${keyword}%`)
+            .order('created_at', { ascending: false })
+            .limit(3);
 
-        if (!chamadosError && chamadosData) {
-          chamados.push(...chamadosData);
+          if (!chamadosError && chamadosData) {
+            chamados.push(...chamadosData);
+          }
         }
+
+        // Remover duplicatas
+        chamados = chamados.filter((item, index, self) => 
+          index === self.findIndex(t => t.id === item.id)
+        );
+
+        console.log('Chamados similares encontrados:', chamados.length);
+      } catch (error) {
+        console.error('Erro ao buscar chamados:', error);
       }
-
-      // Remover duplicatas
-      chamados = chamados.filter((item, index, self) => 
-        index === self.findIndex(t => t.id === item.id)
-      );
-
-      console.log('Chamados similares encontrados:', chamados.length);
-    } catch (error) {
-      console.error('Erro ao buscar chamados:', error);
     }
 
     // Gerar resposta baseada na base de conhecimento (sem IA externa)
@@ -159,22 +163,26 @@ serve(async (req) => {
 
       const bestMatch = scoredKb[0];
       
-      botResponse = `**Encontrei uma solução na nossa base de conhecimento:**
-
-**${bestMatch.titulo}**
+      botResponse = `**${bestMatch.titulo}**
 
 **Problema:** ${bestMatch.problema_descricao}
 
-**Solução:** ${bestMatch.solucao}
+**Solução:** ${bestMatch.solucao}`;
 
-**Categoria:** ${bestMatch.categoria || 'Geral'}`;
+      // Adicionar categoria apenas se não for óbvia
+      if (bestMatch.categoria && bestMatch.categoria.toLowerCase() !== 'geral') {
+        botResponse += `\n\n**Categoria:** ${bestMatch.categoria}`;
+      }
 
-      // Adicionar soluções alternativas se houver
-      if (scoredKb.length > 1) {
-        botResponse += `\n\n**Outras soluções relacionadas:**`;
-        scoredKb.slice(1, 3).forEach((item, index) => {
-          botResponse += `\n${index + 2}. **${item.titulo}** - ${item.solucao.substring(0, 100)}...`;
-        });
+      // Adicionar soluções alternativas apenas se houver e forem muito relevantes
+      if (scoredKb.length > 1 && scoredKb[1].score >= scoredKb[0].score * 0.7) {
+        const altSolutions = scoredKb.slice(1, 2).filter(item => item.score >= bestMatch.score * 0.7);
+        if (altSolutions.length > 0) {
+          botResponse += `\n\n**Solução alternativa:**\n`;
+          altSolutions.forEach((item) => {
+            botResponse += `• **${item.titulo}** - ${item.solucao.substring(0, 150)}${item.solucao.length > 150 ? '...' : ''}`;
+          });
+        }
       }
 
     } else {
@@ -185,34 +193,33 @@ serve(async (req) => {
 • Tente reformular sua pergunta usando termos mais específicos
 • Verifique se o problema está relacionado a: login, assinatura digital, movimentação processual, ou erro de sistema
 • Abra um chamado para assistência personalizada`;
+
+      // Adicionar assuntos relacionados apenas se não encontrou solução
+      if (assuntos.length > 0) {
+        botResponse += `\n\n**Assuntos relacionados que podem ajudar:**`;
+        assuntos.slice(0, 5).forEach(assunto => {
+          botResponse += `\n• ${assunto.nome}${assunto.categoria ? ` (${assunto.categoria})` : ''}`;
+        });
+      }
+
+      // Adicionar números de chamados similares apenas se não encontrou solução
+      if (chamados.length > 0) {
+        botResponse += `\n\n**Chamados similares já cadastrados:**`;
+        chamados.slice(0, 3).forEach((chamado, index) => {
+          botResponse += `\n${index + 1}. **Chamado #${chamado.id.substring(0, 8)}** - ${chamado.titulo} (Status: ${chamado.status})`;
+        });
+        botResponse += `\n\n*Você pode usar estes números de chamado como referência.*`;
+      }
     }
 
-    // Adicionar assuntos relacionados se houver
-    if (assuntos.length > 0) {
-      botResponse += `\n\n**Assuntos relacionados que podem ajudar:**`;
-      assuntos.slice(0, 5).forEach(assunto => {
-        botResponse += `\n• ${assunto.nome}${assunto.categoria ? ` (${assunto.categoria})` : ''}`;
-      });
-    }
-
-    // Adicionar números de chamados similares se houver
-    if (chamados.length > 0) {
-      botResponse += `\n\n**Chamados similares já cadastrados:**`;
-      chamados.slice(0, 3).forEach((chamado, index) => {
-        botResponse += `\n${index + 1}. **Chamado #${chamado.id.substring(0, 8)}** - ${chamado.titulo} (Status: ${chamado.status})`;
-      });
-      botResponse += `\n\n*Você pode usar estes números de chamado como referência.*`;
-    }
-
-    // Tentar usar OpenAI como fallback se disponível
+    // Tentar usar OpenAI como fallback apenas se disponível e se a resposta base não for satisfatória
     const openAIKey = Deno.env.get('OPENAI_API_KEY');
     if (openAIKey && knowledgeBase.length > 0) {
       try {
         console.log('Melhorando resposta com OpenAI...');
         
-        const context = knowledgeBase.slice(0, 3).map(item => 
-          `Título: ${item.titulo}\nProblema: ${item.problema_descricao}\nSolução: ${item.solucao}`
-        ).join('\n\n');
+        const bestMatch = knowledgeBase[0];
+        const context = `Título: ${bestMatch.titulo}\nProblema: ${bestMatch.problema_descricao}\nSolução: ${bestMatch.solucao}`;
 
         const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
@@ -227,15 +234,17 @@ serve(async (req) => {
                 role: 'system',
                 content: `Você é um assistente especializado em suporte técnico do PJe (Processo Judicial Eletrônico). 
                 Baseie sua resposta EXCLUSIVAMENTE nas informações da base de conhecimento fornecida. 
-                Seja direto, prático e didático. Use formatação markdown.`
+                Seja direto, prático e conciso. Use formatação markdown. 
+                NÃO adicione informações extras, soluções alternativas ou referências a chamados se não solicitado.
+                Foque apenas na solução principal encontrada.`
               },
               {
                 role: 'user',
-                content: `Pergunta: ${message}\n\nBase de conhecimento:\n${context}\n\nForneça uma resposta baseada apenas nestas informações.`
+                content: `Pergunta: ${message}\n\nBase de conhecimento:\n${context}\n\nForneça uma resposta concisa baseada apenas nestas informações, sem adicionar conteúdo extra.`
               }
             ],
-            max_tokens: 800,
-            temperature: 0.3
+            max_tokens: 400,
+            temperature: 0.2
           }),
         });
 
