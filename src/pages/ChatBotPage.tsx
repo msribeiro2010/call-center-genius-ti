@@ -1,11 +1,27 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ChatBot from '@/components/ChatBot';
 
 const ChatBotPage = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
       <div className="container mx-auto py-8">
+        <div className="flex justify-between items-center mb-8">
+          <Button 
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao Dashboard
+          </Button>
+        </div>
+        
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Assistente Virtual PJe

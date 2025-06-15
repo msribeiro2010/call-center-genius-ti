@@ -30,8 +30,13 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
 
+  // Debug log para verificar se os assuntos estão chegando
+  console.log('SearchableAssuntoSelect - assuntos recebidos:', assuntos.length, assuntos);
+  console.log('SearchableAssuntoSelect - loading:', loading);
+
   // Agrupar assuntos por categoria
   const assuntosPorCategoria = useMemo(() => {
+    console.log('Agrupando assuntos por categoria...');
     return assuntos.reduce((acc, assunto) => {
       const categoria = assunto.categoria || 'Outros';
       if (!acc[categoria]) {
@@ -67,6 +72,32 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
 
   const selectedAssunto = assuntos.find(assunto => assunto.id === value);
 
+  if (loading) {
+    return (
+      <Button
+        variant="outline"
+        className="w-full justify-between"
+        disabled
+      >
+        Carregando assuntos...
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    );
+  }
+
+  if (assuntos.length === 0) {
+    return (
+      <Button
+        variant="outline"
+        className="w-full justify-between"
+        disabled
+      >
+        Nenhum assunto encontrado
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+      </Button>
+    );
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -97,6 +128,7 @@ const SearchableAssuntoSelect: React.FC<SearchableAssuntoSelectProps> = ({
                     key={assunto.id}
                     value={assunto.nome}
                     onSelect={() => {
+                      console.log('Assunto selecionado:', assunto);
                       onValueChange(assunto.id);
                       setOpen(false);
                       setSearchValue('');
