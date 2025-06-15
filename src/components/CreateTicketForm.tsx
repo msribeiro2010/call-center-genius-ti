@@ -1,24 +1,22 @@
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
-import ResponseTemplates from './ResponseTemplates';
-import JiraTemplateModal from './JiraTemplateModal';
-import { useCreateTicketForm } from '@/hooks/useCreateTicketForm';
-import { primeiroGrauOJs, segundoGrauOJs } from '@/data';
-import { FileText, Scale } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Save, FileText } from 'lucide-react';
 import BasicInfoSection from './FormSections/BasicInfoSection';
 import SubjectSection from './FormSections/SubjectSection';
 import UserSection from './FormSections/UserSection';
 import AdvancedSettingsSection from './FormSections/AdvancedSettingsSection';
 import DescriptionSection from './FormSections/DescriptionSection';
+import JiraTemplateModal from './JiraTemplateModal';
+import { useCreateTicketForm } from '@/hooks/useCreateTicketForm';
 
 interface CreateTicketFormProps {
-  onTicketCreated?: () => void;
   editingTicket?: any;
+  onTicketCreated?: () => void;
 }
 
-const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, editingTicket }) => {
+const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ editingTicket, onTicketCreated }) => {
   const {
     formData,
     handleFormDataChange,
@@ -36,110 +34,95 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ onTicketCreated, ed
     usuariosLoading
   } = useCreateTicketForm(editingTicket, onTicketCreated);
 
-  // Filter out invalid OJ options to prevent empty value props
-  const ojOptions = formData.grau === '1' ? 
-    primeiroGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
-    formData.grau === '2' ? 
-    segundoGrauOJs.filter(oj => oj.codigo && oj.codigo.trim() !== '') : 
-    [];
+  // Buscar o título do assunto selecionado
+  const assuntoSelecionado = assuntos.find(a => a.id === formData.assuntoId);
+  const titulo = assuntoSelecionado ? assuntoSelecionado.nome : '';
+
+  // Criar objeto com título para o JiraTemplateModal
+  const jiraDataWithTitle = {
+    ...jiraTemplateData,
+    titulo: titulo
+  };
 
   return (
-    <div className="space-y-8 max-w-6xl mx-auto">
-      <Card className="shadow-lg border-0 bg-gradient-to-br from-white to-gray-50">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg">
-          <CardTitle className="text-2xl font-bold flex items-center gap-3">
-            <FileText className="h-7 w-7" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
             {editingTicket ? 'Editar Chamado' : 'Criar Novo Chamado'}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Seção de Informações Básicas */}
-            <BasicInfoSection
-              formData={{
-                chamadoOrigem: formData.chamadoOrigem,
-                grau: formData.grau,
-                numeroProcesso: formData.numeroProcesso
-              }}
-              onFormDataChange={handleFormDataChange}
-              onProcessoChange={handleProcessoChange}
-              onGrauChange={handleGrauChange}
-            />
+          </h1>
+          <p className="text-gray-600">
+            {editingTicket ? 'Atualize as informações do chamado' : 'Preencha as informações para criar um novo chamado'}
+          </p>
+        </div>
 
-            {/* Seção do Assunto */}
-            <SubjectSection
-              assuntoId={formData.assuntoId}
-              onAssuntoChange={(value) => handleFormDataChange('assuntoId', value)}
-              assuntos={assuntos}
-              assuntosLoading={assuntosLoading}
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <BasicInfoSection
+            formData={formData}
+            onFormDataChange={handleFormDataChange}
+            onProcessoChange={handleProcessoChange}
+            onGrauChange={handleGrauChange}
+          />
 
-            {/* Seção do Usuário Afetado */}
-            <UserSection
-              formData={{
-                cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
-                nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
-                perfilUsuarioAfetado: formData.perfilUsuarioAfetado
-              }}
-              onFormDataChange={handleFormDataChange}
-              onCPFChange={handleCPFChange}
-              cpfError={cpfError}
-              usuariosLoading={usuariosLoading}
-            />
+          <SubjectSection
+            assuntoId={formData.assuntoId}
+            onAssuntoChange={(value) => handleFormDataChange('assuntoId', value)}
+            assuntos={assuntos}
+            assuntosLoading={assuntosLoading}
+          />
 
-            {/* OJ Detectada */}
-            {formData.ojDetectada && (
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Scale className="h-5 w-5 text-blue-600" />
-                  <label className="text-sm font-semibold text-blue-800">OJ Detectada Automaticamente:</label>
-                </div>
-                <p className="text-sm text-blue-700 font-medium">{formData.ojDetectada}</p>
-              </div>
-            )}
+          <DescriptionSection
+            descricao={formData.descricao}
+            onDescricaoChange={(value) => handleFormDataChange('descricao', value)}
+            onImprovedDescription={handleImprovedDescription}
+            context={`Grau: ${formData.grau}, Órgão: ${formData.orgaoJulgador}`}
+            numeroProcesso={formData.numeroProcesso}
+          />
 
-            {/* Seção de Configurações Avançadas */}
-            <AdvancedSettingsSection
-              formData={{
-                orgaoJulgador: formData.orgaoJulgador,
-                tipo: formData.tipo,
-                prioridade: formData.prioridade,
-                grau: formData.grau
-              }}
-              onFormDataChange={handleFormDataChange}
-              ojOptions={ojOptions}
-            />
+          <UserSection
+            formData={{
+              nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
+              cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
+              perfilUsuarioAfetado: formData.perfilUsuarioAfetado
+            }}
+            onFormDataChange={handleFormDataChange}
+            onCPFChange={handleCPFChange}
+            cpfError={cpfError}
+            usuariosLoading={usuariosLoading}
+          />
 
-            {/* Seção da Descrição */}
-            <DescriptionSection
-              descricao={formData.descricao}
-              onDescricaoChange={(value) => handleFormDataChange('descricao', value)}
-              onImprovedDescription={handleImprovedDescription}
-              context={`${formData.assuntoId} - ${formData.tipo}`}
-              numeroProcesso={formData.numeroProcesso}
-            />
+          <AdvancedSettingsSection
+            formData={{
+              orgaoJulgador: formData.orgaoJulgador,
+              ojDetectada: formData.ojDetectada,
+              prioridade: formData.prioridade,
+              tipo: formData.tipo
+            }}
+            onFormDataChange={handleFormDataChange}
+            grau={formData.grau}
+          />
 
-            {/* Botão de Submit */}
-            <div className="flex justify-center pt-4">
+          {/* Submit Button */}
+          <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+            <CardContent className="p-6">
               <Button 
                 type="submit" 
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-12 py-3 text-lg font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
               >
-                {editingTicket ? '✏️ Atualizar Chamado' : '🚀 Criar Chamado'}
+                <Save className="h-5 w-5" />
+                {editingTicket ? 'Atualizar Chamado' : 'Criar Chamado'}
               </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </form>
 
-      <ResponseTemplates />
-
-      {/* Modal do Template JIRA */}
-      <JiraTemplateModal
-        isOpen={showJiraModal}
-        onClose={handleJiraModalClose}
-        ticketData={jiraTemplateData}
-      />
+        <JiraTemplateModal 
+          isOpen={showJiraModal}
+          onClose={handleJiraModalClose}
+          ticketData={jiraDataWithTitle}
+        />
+      </div>
     </div>
   );
 };
