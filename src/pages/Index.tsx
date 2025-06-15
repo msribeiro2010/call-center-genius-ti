@@ -1,5 +1,9 @@
+
 import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import CreateTicketForm from "@/components/CreateTicketForm";
 import StatsCards from "@/components/StatsCards";
 import RecentTickets from "@/components/RecentTickets";
@@ -31,6 +35,7 @@ const Index = () => {
   const { user } = useAuth();
   const { tickets, loading, stats, searchTerm, setSearchTerm, deleteTicket } = useTickets();
   const [editingTicket, setEditingTicket] = useState<Ticket | null>(null);
+  const navigate = useNavigate();
 
   const handleEditTicket = (ticket: Ticket) => {
     setEditingTicket(ticket);
@@ -53,6 +58,13 @@ const Index = () => {
               </h1>
             </div>
             <div className="flex items-center gap-4">
+              <Button 
+                onClick={() => navigate('/chatbot')}
+                className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
+              >
+                <MessageCircle className="h-4 w-4" />
+                ChatBot
+              </Button>
               <span className="text-sm text-gray-600">
                 Bem-vindo, {user?.user_metadata?.full_name || user?.email}
               </span>
