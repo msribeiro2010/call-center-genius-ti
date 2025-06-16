@@ -34,7 +34,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
       <div className="space-y-6">
         {/* Primeira linha - Chamado de Origem, Grau e Número do Processo */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-3 space-y-2">
+          <div className="md:col-span-2 space-y-2">
             <Label htmlFor="chamadoOrigem" className="text-sm font-medium text-gray-700">
               Número do Chamado de Origem
             </Label>
@@ -47,7 +47,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             />
           </div>
 
-          <div className="md:col-span-2 space-y-2">
+          <div className="md:col-span-1 space-y-2">
             <Label htmlFor="grau" className="text-sm font-medium text-gray-700 flex items-center gap-1">
               <Scale className="h-4 w-4" />
               Grau *
@@ -63,7 +63,7 @@ const BasicInfoSection: React.FC<BasicInfoSectionProps> = ({
             </Select>
           </div>
 
-          <div className="md:col-span-7 space-y-2">
+          <div className="md:col-span-9 space-y-2">
             <Label htmlFor="numeroProcesso" className="text-sm font-medium text-gray-700">
               Número do Processo
             </Label>
