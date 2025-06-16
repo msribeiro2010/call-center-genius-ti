@@ -70,6 +70,18 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ editingTicket, onTi
             onGrauChange={handleGrauChange}
           />
 
+          <UserSection
+            formData={{
+              nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
+              cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
+              perfilUsuarioAfetado: formData.perfilUsuarioAfetado
+            }}
+            onFormDataChange={handleFormDataChange}
+            onCPFChange={handleCPFChange}
+            cpfError={cpfError}
+            usuariosLoading={usuariosLoading}
+          />
+
           <SubjectSection
             assuntoId={formData.assuntoId}
             onAssuntoChange={(value) => handleFormDataChange('assuntoId', value)}
@@ -83,18 +95,6 @@ const CreateTicketForm: React.FC<CreateTicketFormProps> = ({ editingTicket, onTi
             onImprovedDescription={handleImprovedDescription}
             context={`Grau: ${formData.grau}, Órgão: ${formData.orgaoJulgador}`}
             numeroProcesso={formData.numeroProcesso}
-          />
-
-          <UserSection
-            formData={{
-              nomeUsuarioAfetado: formData.nomeUsuarioAfetado,
-              cpfUsuarioAfetado: formData.cpfUsuarioAfetado,
-              perfilUsuarioAfetado: formData.perfilUsuarioAfetado
-            }}
-            onFormDataChange={handleFormDataChange}
-            onCPFChange={handleCPFChange}
-            cpfError={cpfError}
-            usuariosLoading={usuariosLoading}
           />
 
           <AdvancedSettingsSection
