@@ -7,7 +7,6 @@ import { useKnowledgeSubjects } from '@/hooks/useKnowledgeSubjects';
 import CreateSubjectDialog from './KnowledgeSubjects/CreateSubjectDialog';
 import EditSubjectDialog from './KnowledgeSubjects/EditSubjectDialog';
 import DeleteSubjectDialog from './KnowledgeSubjects/DeleteSubjectDialog';
-import { Badge } from './ui/badge';
 
 const KnowledgeSubjectManager = () => {
   const { subjects, loading, createSubject, updateSubject, deleteSubject } = useKnowledgeSubjects();
@@ -17,11 +16,18 @@ const KnowledgeSubjectManager = () => {
   const handleEdit = async (subject: any) => {
     await updateSubject(subject.id, subject.nome, subject.categoria);
     setIsEditDialogOpen(false);
+    setSelectedSubject(null);
   };
 
   const handleViewSubject = (subject: any) => {
+    console.log('Opening subject for editing:', subject);
     setSelectedSubject(subject);
     setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteSubject = async (id: string) => {
+    console.log('Deleting subject with id:', id);
+    await deleteSubject(id);
   };
 
   return (
@@ -50,9 +56,6 @@ const KnowledgeSubjectManager = () => {
               <div key={subject.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{subject.nome}</span>
-                  {subject.categoria && (
-                    <Badge variant="outline">{subject.categoria}</Badge>
-                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -62,15 +65,14 @@ const KnowledgeSubjectManager = () => {
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  <DeleteSubjectDialog
-                    subject={subject}
-                    onDelete={deleteSubject}
-                    trigger={
-                      <Button variant="outline" size="sm">
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleDeleteSubject(subject.id)}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -90,7 +92,12 @@ const KnowledgeSubjectManager = () => {
           onEdit={handleEdit}
           trigger={null}
           isOpen={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditDialogOpen(open);
+            if (!open) {
+              setSelectedSubject(null);
+            }
+          }}
         />
       )}
     </Card>
