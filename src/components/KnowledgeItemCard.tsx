@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Eye, ThumbsUp, File } from 'lucide-react';
+import { Eye, ThumbsUp, File, Edit2, Trash2 } from 'lucide-react';
 
 interface KnowledgeItem {
   id: string;
@@ -21,9 +21,16 @@ interface KnowledgeItem {
 interface KnowledgeItemCardProps {
   item: KnowledgeItem;
   onViewSolution: (item: KnowledgeItem) => void;
+  onEdit?: (item: KnowledgeItem) => void;
+  onDelete?: (id: string) => void;
 }
 
-const KnowledgeItemCard: React.FC<KnowledgeItemCardProps> = ({ item, onViewSolution }) => {
+const KnowledgeItemCard: React.FC<KnowledgeItemCardProps> = ({ 
+  item, 
+  onViewSolution, 
+  onEdit, 
+  onDelete 
+}) => {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-4">
@@ -62,13 +69,38 @@ const KnowledgeItemCard: React.FC<KnowledgeItemCardProps> = ({ item, onViewSolut
             </span>
           </div>
           
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewSolution(item)}
-          >
-            Ver Solução
-          </Button>
+          <div className="flex gap-2">
+            {onEdit && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEdit(item)}
+                title="Editar"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
+            
+            {onDelete && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onDelete(item.id)}
+                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                title="Excluir"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onViewSolution(item)}
+            >
+              Ver Solução
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
