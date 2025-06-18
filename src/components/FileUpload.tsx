@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
-import { Upload, X, File } from 'lucide-react';
+import { Upload, X, File, FileText, FileImage, FileType } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 
@@ -20,31 +20,78 @@ const FileUpload: React.FC<FileUploadProps> = ({
   currentFile,
   onFileRemoved,
   label = "Arquivo",
-  accept = "image/*"
+  accept = "image/*,.pdf,.txt,.rtf,.csv"
 }) => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
+
+  const getFileIcon = (fileName: string) => {
+    const extension = fileName.toLowerCase().split('.').pop();
+    switch (extension) {
+      case 'pdf':
+        return <FileText className="h-4 w-4 text-red-500" />;
+      case 'txt':
+      case 'rtf':
+        return <FileType className="h-4 w-4 text-blue-500" />;
+      case 'csv':
+        return <File className="h-4 w-4 text-green-500" />;
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return <FileImage className="h-4 w-4 text-purple-500" />;
+      default:
+        return <File className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  const validateFile = (file: File): boolean => {
+    // Validar tamanho do arquivo (máximo 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "O arquivo deve ter no máximo 10MB",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Validar tipo de arquivo
+    const allowedTypes = [
+      'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+      'application/pdf',
+      'text/plain',
+      'text/rtf',
+      'application/rtf',
+      'text/csv',
+      'application/csv'
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Erro",
+        description: "Tipo de arquivo não suportado. Use: PDF, TXT, RTF, CSV ou imagens",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validar tamanho do arquivo (máximo 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "Erro",
-        description: "O arquivo deve ter no máximo 5MB",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!validateFile(file)) return;
 
     setUploading(true);
 
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
-      const filePath = `prints/${fileName}`;
+      const filePath = `uploads/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('knowledge-base-files')
@@ -103,6 +150,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
     return data.publicUrl;
   };
 
+  const getFileName = (filePath: string) => {
+    return filePath.split('/').pop() || 'Arquivo';
+  };
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
@@ -111,8 +162,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
         <div className="border border-gray-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <File className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-700">Arquivo anexado</span>
+              {getFileIcon(currentFile)}
+              <span className="text-sm text-gray-700">{getFileName(currentFile)}</span>
             </div>
             <div className="flex gap-2">
               <Button
@@ -163,7 +214,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               />
             </Label>
             <p className="text-xs text-gray-500 mt-1">
-              PNG, JPG, GIF até 5MB
+              PDF, TXT, RTF, CSV, PNG, JPG, GIF até 10MB
             </p>
           </div>
         </div>

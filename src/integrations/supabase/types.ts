@@ -197,6 +197,36 @@ export type Database = {
           },
         ]
       }
+      processos: {
+        Row: {
+          created_at: string
+          grau: string | null
+          id: string
+          numero_processo: string
+          oj_detectada: string | null
+          orgao_julgador: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          grau?: string | null
+          id?: string
+          numero_processo: string
+          oj_detectada?: string | null
+          orgao_julgador?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          grau?: string | null
+          id?: string
+          numero_processo?: string
+          oj_detectada?: string | null
+          orgao_julgador?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

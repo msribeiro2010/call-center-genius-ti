@@ -6,6 +6,7 @@ import { useOJDetection } from './useOJDetection';
 import { useAssuntos } from './useAssuntos';
 import { useCPFValidation } from './useCPFValidation';
 import { useUsuarios } from './useUsuarios';
+import { useProcessos } from './useProcessos';
 
 interface FormData {
   chamadoOrigem: string;
@@ -28,6 +29,7 @@ export const useCreateTicketForm = (editingTicket?: any, onTicketCreated?: () =>
   const { assuntos, loading: assuntosLoading } = useAssuntos();
   const { cpfError, validateCPF, formatCPF, setCpfError } = useCPFValidation();
   const { buscarUsuarioPorCPF, salvarUsuario, loading: usuariosLoading } = useUsuarios();
+  const { buscarProcessoPorNumero, salvarProcesso } = useProcessos();
   
   const [showJiraModal, setShowJiraModal] = useState(false);
   const [jiraTemplateData, setJiraTemplateData] = useState<FormData>({
@@ -112,14 +114,32 @@ export const useCreateTicketForm = (editingTicket?: any, onTicketCreated?: () =>
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleProcessoChange = (value: string) => {
+  const handleProcessoChange = async (value: string) => {
     console.log('Mudança no processo:', value);
     setFormData(prev => ({ ...prev, numeroProcesso: value }));
     
-    // Só detectar OJ automaticamente se o grau for 1º grau
-    if (value.trim() && !editingTicket && formData.grau === '1') {
-      console.log('Detectando OJ para 1º grau');
-      detectarOJ(value, '1');
+    if (value.trim() && value.length >= 15) {
+      // Buscar processo existente
+      const processoExistente = await buscarProcessoPorNumero(value);
+      
+      if (processoExistente) {
+        // Preencher automaticamente os campos com os dados encontrados
+        setFormData(prev => ({
+          ...prev,
+          grau: processoExistente.grau || prev.grau,
+          orgaoJulgador: processoExistente.orgao_julgador || prev.orgaoJulgador,
+          ojDetectada: processoExistente.oj_detectada || prev.ojDetectada
+        }));
+        
+        toast({
+          title: "Processo encontrado",
+          description: `Dados do processo ${value} preenchidos automaticamente`,
+        });
+      } else if (!editingTicket && formData.grau === '1') {
+        // Se não encontrou processo e é 1º grau, detectar OJ automaticamente
+        console.log('Detectando OJ para 1º grau');
+        detectarOJ(value, '1');
+      }
     } else if (!value.trim()) {
       clearOJData();
     }
@@ -224,6 +244,16 @@ export const useCreateTicketForm = (editingTicket?: any, onTicketCreated?: () =>
           formData.cpfUsuarioAfetado,
           formData.nomeUsuarioAfetado,
           formData.perfilUsuarioAfetado
+        );
+      }
+
+      // Salvar processo se todos os dados estiverem preenchidos
+      if (formData.numeroProcesso && formData.grau && formData.orgaoJulgador) {
+        await salvarProcesso(
+          formData.numeroProcesso,
+          formData.grau,
+          formData.orgaoJulgador,
+          formData.ojDetectada
         );
       }
 

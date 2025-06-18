@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
+import FileUpload from './FileUpload';
 
 interface KnowledgeCreateModalProps {
   showCreateForm: boolean;
@@ -37,6 +38,14 @@ const KnowledgeCreateModal: React.FC<KnowledgeCreateModalProps> = ({
   onClose,
   isEditing = false
 }) => {
+  const handleFileUploaded = (filePath: string) => {
+    setFormData({ ...formData, arquivo_print: filePath });
+  };
+
+  const handleFileRemoved = () => {
+    setFormData({ ...formData, arquivo_print: '' });
+  };
+
   return (
     <Dialog open={showCreateForm} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -100,12 +109,12 @@ const KnowledgeCreateModal: React.FC<KnowledgeCreateModalProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="arquivo_print">URL do Arquivo/Print</Label>
-            <Input
-              id="arquivo_print"
-              value={formData.arquivo_print}
-              onChange={(e) => setFormData({ ...formData, arquivo_print: e.target.value })}
-              placeholder="URL do anexo ou print"
+            <FileUpload
+              label="Arquivo/Documento de Apoio"
+              onFileUploaded={handleFileUploaded}
+              currentFile={formData.arquivo_print}
+              onFileRemoved={handleFileRemoved}
+              accept="image/*,.pdf,.txt,.rtf,.csv"
             />
           </div>
           
