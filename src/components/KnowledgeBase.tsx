@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Input } from './ui/input';
-import { Search, Plus, Eye, ThumbsUp, FileText, Upload, ExternalLink, Settings } from 'lucide-react';
+import { Search, Plus, Eye, ThumbsUp, FileText, Upload, ExternalLink } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from './ui/use-toast';
 import { useAuth } from '@/hooks/useAuth';
@@ -12,7 +13,6 @@ import KnowledgeCreateModal from './KnowledgeCreateModal';
 import KnowledgeSolutionModal from './KnowledgeSolutionModal';
 import KnowledgeItemCard from './KnowledgeItemCard';
 import BulkKnowledgeUpload from './BulkKnowledgeUpload';
-import KnowledgeSubjectManager from './KnowledgeSubjectManager';
 import { useAdmin } from '@/hooks/useAdmin';
 
 interface KnowledgeItem {
@@ -36,8 +36,8 @@ const KnowledgeBase = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const [showSubjectManager, setShowSubjectManager] = useState(false);
   const [selectedItem, setSelectedItem] = useState<KnowledgeItem | null>(null);
+  const [editingItem, setEditingItem] = useState<KnowledgeItem | null>(null);
   const [formData, setFormData] = useState({
     titulo: '',
     problema_descricao: '',
@@ -114,6 +114,50 @@ const KnowledgeBase = () => {
     setSelectedItem(null);
   };
 
+  const handleEditItem = (item: KnowledgeItem) => {
+    setEditingItem(item);
+    setFormData({
+      titulo: item.titulo,
+      problema_descricao: item.problema_descricao,
+      solucao: item.solucao,
+      categoria: item.categoria,
+      tags: Array.isArray(item.tags) ? item.tags.join(', ') : '',
+      arquivo_print: item.arquivo_print || ''
+    });
+    setIsCreateModalOpen(true);
+  };
+
+  const handleDeleteItem = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('base_conhecimento')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Erro ao excluir item:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao excluir item da base de conhecimento",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Sucesso",
+          description: "Item excluído com sucesso!",
+        });
+        fetchKnowledgeItems();
+      }
+    } catch (error) {
+      console.error('Erro ao excluir item:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao excluir item",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleVote = async (item: KnowledgeItem, isUpvote: boolean) => {
     try {
       const newUtilCount = (item.util_count || 0) + (isUpvote ? 1 : -1);
@@ -142,46 +186,78 @@ const KnowledgeBase = () => {
     e.preventDefault();
     
     try {
-      const { data, error } = await supabase
-        .from('base_conhecimento')
-        .insert([{
-          titulo: formData.titulo,
-          problema_descricao: formData.problema_descricao,
-          solucao: formData.solucao,
-          categoria: formData.categoria,
-          tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-          arquivo_print: formData.arquivo_print
-        }])
-        .select();
+      if (editingItem) {
+        // Atualizar item existente
+        const { error } = await supabase
+          .from('base_conhecimento')
+          .update({
+            titulo: formData.titulo,
+            problema_descricao: formData.problema_descricao,
+            solucao: formData.solucao,
+            categoria: formData.categoria,
+            tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+            arquivo_print: formData.arquivo_print
+          })
+          .eq('id', editingItem.id);
 
-      if (error) {
-        console.error('Erro ao criar item:', error);
-        toast({
-          title: "Erro",
-          description: "Erro ao criar item na base de conhecimento",
-          variant: "destructive"
-        });
+        if (error) {
+          console.error('Erro ao atualizar item:', error);
+          toast({
+            title: "Erro",
+            description: "Erro ao atualizar item na base de conhecimento",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Sucesso",
+            description: "Item atualizado com sucesso!",
+          });
+        }
       } else {
-        toast({
-          title: "Sucesso",
-          description: "Item criado com sucesso!",
-        });
-        setFormData({
-          titulo: '',
-          problema_descricao: '',
-          solucao: '',
-          categoria: '',
-          tags: '',
-          arquivo_print: ''
-        });
-        setIsCreateModalOpen(false);
-        fetchKnowledgeItems();
+        // Criar novo item
+        const { data, error } = await supabase
+          .from('base_conhecimento')
+          .insert([{
+            titulo: formData.titulo,
+            problema_descricao: formData.problema_descricao,
+            solucao: formData.solucao,
+            categoria: formData.categoria,
+            tags: formData.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+            arquivo_print: formData.arquivo_print
+          }])
+          .select();
+
+        if (error) {
+          console.error('Erro ao criar item:', error);
+          toast({
+            title: "Erro",
+            description: "Erro ao criar item na base de conhecimento",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Sucesso",
+            description: "Item criado com sucesso!",
+          });
+        }
       }
+      
+      setFormData({
+        titulo: '',
+        problema_descricao: '',
+        solucao: '',
+        categoria: '',
+        tags: '',
+        arquivo_print: ''
+      });
+      setEditingItem(null);
+      setIsCreateModalOpen(false);
+      fetchKnowledgeItems();
     } catch (error) {
-      console.error('Erro ao criar item:', error);
+      console.error('Erro ao processar item:', error);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao criar item",
+        description: "Erro inesperado ao processar item",
         variant: "destructive"
       });
     }
@@ -209,16 +285,6 @@ const KnowledgeBase = () => {
           <p className="text-gray-600">Documentações e soluções para problemas comuns</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isAdmin && (
-            <Button
-              onClick={() => setShowSubjectManager(!showSubjectManager)}
-              variant="outline"
-              className="flex items-center gap-2"
-            >
-              <Settings className="h-4 w-4" />
-              Gerenciar Assuntos
-            </Button>
-          )}
           <Button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
             variant="outline"
@@ -237,7 +303,18 @@ const KnowledgeBase = () => {
             <ExternalLink className="h-3 w-3" />
           </Button>
           <Button 
-            onClick={() => setIsCreateModalOpen(true)}
+            onClick={() => {
+              setEditingItem(null);
+              setFormData({
+                titulo: '',
+                problema_descricao: '',
+                solucao: '',
+                categoria: '',
+                tags: '',
+                arquivo_print: ''
+              });
+              setIsCreateModalOpen(true);
+            }}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -245,10 +322,6 @@ const KnowledgeBase = () => {
           </Button>
         </div>
       </div>
-
-      {showSubjectManager && isAdmin && (
-        <KnowledgeSubjectManager />
-      )}
 
       {showBulkUpload && (
         <BulkKnowledgeUpload />
@@ -288,6 +361,8 @@ const KnowledgeBase = () => {
               key={item.id}
               item={item}
               onViewSolution={() => handleOpenSolution(item)}
+              onEdit={handleEditItem}
+              onDelete={handleDeleteItem}
             />
           ))}
         </div>
@@ -299,7 +374,11 @@ const KnowledgeBase = () => {
           formData={formData}
           setFormData={setFormData}
           onSubmit={handleCreateSubmit}
-          onClose={() => setIsCreateModalOpen(false)}
+          onClose={() => {
+            setIsCreateModalOpen(false);
+            setEditingItem(null);
+          }}
+          isEditing={!!editingItem}
         />
       )}
 
