@@ -9,8 +9,8 @@ import { useTicketSubmission } from './useTicketSubmission';
 
 export const useCreateTicketForm = (editingTicket?: any, onTicketCreated?: () => void) => {
   const { assuntos, loading: assuntosLoading } = useAssuntos();
-  const { cpfError, usuariosLoading } = useCPFValidation();
-  const { loading: usuariosLoadingHook } = useUsuarios();
+  const { cpfError } = useCPFValidation();
+  const { loading: usuariosLoading } = useUsuarios();
   
   const { formData, setFormData, handleFormDataChange, resetFormData } = useTicketFormData(editingTicket);
   
@@ -59,6 +59,6 @@ export const useCreateTicketForm = (editingTicket?: any, onTicketCreated?: () =>
     assuntos,
     assuntosLoading,
     cpfError,
-    usuariosLoading: usuariosLoading || usuariosLoadingHook
+    usuariosLoading
   };
 };
