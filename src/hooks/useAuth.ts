@@ -90,13 +90,10 @@ export const useAuth = () => {
       return { error: { message: "Domínio não autorizado" } };
     }
 
-    const redirectUrl = `${window.location.origin}/`;
-    
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl,
         data: {
           full_name: nomeCompleto
         }
