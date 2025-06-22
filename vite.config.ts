@@ -5,6 +5,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
+// Configuração para GitHub Pages - Deploy automático
 export default defineConfig(({ mode }) => ({
   base: process.env.NODE_ENV === 'production' ? '/your-repo-name/' : '/',
   server: {
