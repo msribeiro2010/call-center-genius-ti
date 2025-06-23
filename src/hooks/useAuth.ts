@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,75 +11,54 @@ export const useAuth = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    console.log('Inicializando useAuth...');
+    console.log('Inicializando useAuth - versão simplificada');
     
-    let mounted = true;
+    let isMounted = true;
 
-    const initializeAuth = async () => {
+    const getInitialSession = async () => {
       try {
-        // Configurar listener de mudanças de autenticação PRIMEIRO
-        console.log('Configurando listener de auth...');
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-          async (event, session) => {
-            console.log('Auth state change:', event, session ? 'Logado' : 'Não logado');
-            
-            if (mounted) {
-              setSession(session);
-              setUser(session?.user ?? null);
-              
-              // Se o evento for SIGNED_OUT, garantir que o estado seja limpo
-              if (event === 'SIGNED_OUT') {
-                setSession(null);
-                setUser(null);
-              }
-              
-              // Marcar loading como false apenas após o primeiro evento
-              if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-                setLoading(false);
-              }
-            }
-          }
-        );
-
-        // Verificar sessão existente
-        console.log('Verificando sessão existente...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('Erro ao obter sessão:', error);
-          if (mounted) {
-            setLoading(false);
-          }
         } else {
-          console.log('Sessão obtida:', session ? 'Logado' : 'Não logado');
-          
-          if (mounted) {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-          }
+          console.log('Sessão inicial obtida:', session ? 'Logado' : 'Não logado');
         }
-
-        return () => {
-          mounted = false;
-          subscription.unsubscribe();
-        };
+        
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
       } catch (error) {
-        console.error('Erro na inicialização da auth:', error);
-        if (mounted) {
+        console.error('Erro na inicialização:', error);
+        if (isMounted) {
           setLoading(false);
         }
       }
     };
 
-    // Inicializar
-    const cleanup = initializeAuth();
+    // Configurar listener de mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, session ? 'Logado' : 'Não logado');
+        
+        if (isMounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Obter sessão inicial
+    getInitialSession();
 
     return () => {
-      mounted = false;
-      cleanup?.then(fn => fn?.());
+      isMounted = false;
+      subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Array de dependências vazio para executar apenas uma vez
 
   const signUp = async (email: string, password: string, nomeCompleto: string) => {
     if (!email.endsWith('@trt15.jus.br')) {
@@ -143,7 +123,7 @@ export const useAuth = () => {
       provider: 'google',
       options: {
         queryParams: {
-          hd: 'trt15.jus.br' // Restringe ao domínio trt15.jus.br
+          hd: 'trt15.jus.br'
         }
       }
     });
@@ -166,14 +146,10 @@ export const useAuth = () => {
     try {
       setLoading(true);
       
-      // Fazer logout no Supabase PRIMEIRO
-      const { error } = await supabase.auth.signOut({
-        scope: 'global' // Força logout em todas as sessões
-      });
+      const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Erro no logout:', error);
-        setLoading(false);
         toast({
           title: "Erro",
           description: error.message,
@@ -182,20 +158,12 @@ export const useAuth = () => {
         return { error };
       }
 
-      // Limpar estado local após sucesso
+      // Limpar estado local
       setUser(null);
       setSession(null);
       setLoading(false);
       
       console.log('Logout realizado com sucesso');
-      
-      // Limpar localStorage como precaução adicional
-      localStorage.removeItem('supabase.auth.token');
-      
-      // Forçar recarregamento da página para garantir limpeza completa
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
       
       toast({
         title: "Logout realizado",
@@ -205,24 +173,12 @@ export const useAuth = () => {
       return { error: null };
     } catch (err) {
       console.error('Erro inesperado no logout:', err);
-      
-      // Em caso de erro, ainda assim limpar o estado local e recarregar
-      setUser(null);
-      setSession(null);
       setLoading(false);
-      
-      // Limpar localStorage como precaução adicional
-      localStorage.removeItem('supabase.auth.token');
-      
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 100);
-      
       return { error: err };
     }
   };
 
-  console.log('useAuth state:', { user: !!user, session: !!session, loading });
+  console.log('useAuth state atual:', { user: !!user, session: !!session, loading });
 
   return {
     user,
