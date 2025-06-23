@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -41,6 +42,9 @@ function ErrorFallback({error}: {error: Error}) {
 const App = () => {
   console.log('App renderizando...');
   
+  // Determinar o basename baseado no ambiente
+  const basename = import.meta.env.PROD ? '/call-center-genius-ti' : '';
+  
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
       <QueryClientProvider client={queryClient}>
@@ -48,7 +52,7 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter basename="/call-center-genius-ti">
+            <BrowserRouter basename={basename}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/chatbot" element={<ChatBotPage />} />
